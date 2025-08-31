@@ -43,11 +43,11 @@ app.get('/api', (req, res) => {
     message: 'Welcome to EMT Triage Training API',
     version: '0.1.0',
     team: {
-      name: '[Team Name]',
+      name: 'CodeBlue Collective',
       members: [
-        'Meghan Lawrence (Frontend Lead & Project Manager)',
-        'Sophia Worsham (Backend Lead & AI Integration)',
-        'Daniel Hall ([Role] & [Specialization])'
+        'Meghan Lawrence ',
+        'Sophia Worsham ',
+        'Daniel Hall '
       ]
     },
     endpoints: {
@@ -86,4 +86,8 @@ app.get('/api', (req, res) => {
       userGuide: '/docs/user-guide (coming soon)'
     }
   });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚑 EMT Triage Training API server running on http://localhost:${PORT}`);
 });
