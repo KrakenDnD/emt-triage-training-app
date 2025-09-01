@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import { StyleSheet, Text, View, StatusBar, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
