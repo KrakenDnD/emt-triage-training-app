@@ -2,7 +2,7 @@
   "name": "emt-triage-training-frontend",
   "version": "0.1.0",
   "description": "React Native frontend for EMT Triage Training App",
-  "main": "index.js",
+   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "npx expo start",
     "android": "npx expo start --android",
