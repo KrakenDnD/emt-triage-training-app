@@ -47,7 +47,7 @@ export default function App() {
 
           <View style={styles.teamInfo}>
             <Text style={styles.teamTitle}>Development Team</Text>
-            <Text style={styles.teamText}>[Team Name]</Text>
+            <Text style={styles.teamText}>CodeBlue Collective</Text>
             <Text style={styles.teamMembers}>
               Meghan Lawrence • Sophia Worsham • Daniel Hall
             </Text>
