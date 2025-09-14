@@ -4,11 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Login from './pages/login.tsx';
+import Signup from './pages/signup.tsx';
 
 
 const Stack = createStackNavigator();
 
-// Home Screen Component
 function HomeScreen({ navigation }) {
   const handleStartTraining = () => {
     try {
@@ -88,11 +88,12 @@ export default function App() {
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{
-          headerShown: false, // Hide the default header since you have custom styling
+          headerShown: false, 
         }}
       >
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Signup" component={Signup} />
       </Stack.Navigator>
     </NavigationContainer>
   );
