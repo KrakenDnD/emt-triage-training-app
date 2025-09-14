@@ -1,8 +1,23 @@
 import React from 'react';
 import { StyleSheet, Text, View, StatusBar, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import Login from './pages/login.tsx';
 
-export default function App() {
+
+const Stack = createStackNavigator();
+
+// Home Screen Component
+function HomeScreen({ navigation }) {
+  const handleStartTraining = () => {
+    try {
+      navigation.navigate('Login');
+    } catch (error) {
+      console.log("Nav error::", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a365d" />
@@ -22,7 +37,10 @@ export default function App() {
               Master emergency triage with interactive scenarios and AI guidance
             </Text>
             
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={handleStartTraining}
+            >
               <Text style={styles.buttonText}>Start Training</Text>
             </TouchableOpacity>
           </View>
@@ -61,6 +79,22 @@ export default function App() {
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator 
+        initialRouteName="Home"
+        screenOptions={{
+          headerShown: false, // Hide the default header since you have custom styling
+        }}
+      >
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Login" component={Login} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
