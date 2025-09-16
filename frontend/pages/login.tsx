@@ -1,44 +1,130 @@
-import React from 'react';
-import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  StatusBar, 
+  TextInput, 
+  Alert,
+  ActivityIndicator 
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
 
+export default function Login({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-export default function Login({navigation}) {
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('✅ User logged in:', userCredential.user.email);
+      
+      // Navigate to main app or dashboard
+      // You can replace this with navigation to your main app screen
+      Alert.alert('Success', 'Logged in successfully!', [
+        { text: 'OK', onPress: () => navigation.navigate('Home') }
+      ]);
+      
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      
+      // Handle different error types
+      let errorMessage = 'Login failed. Please try again.';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      }
+      
+      Alert.alert('Login Error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-          <StatusBar barStyle="light-content" backgroundColor="#1a365d" />
-          <LinearGradient
-            colors={['#1a365d', '#2c5282', '#3182ce']}
-            style={styles.gradient}
-          >
-            <View style={styles.scrollContent}>
-              <View style={styles.header}>
-                <Text style={styles.title}>Login</Text>
-                <Text style={styles.subtitle}>Enter your credentials</Text>
-              </View>
-            <View>
-              <Text style={styles.subtitle}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                <Text>Sign in</Text>
-              </TouchableOpacity>
-            </View>
+      <StatusBar barStyle="light-content" backgroundColor="#1a365d" />
+      <LinearGradient
+        colors={['#1a365d', '#2c5282', '#3182ce']}
+        style={styles.gradient}
+      >
+        <View style={styles.scrollContent}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Login</Text>
+            <Text style={styles.subtitle}>Enter your credentials</Text>
+          </View>
+
+          <View style={styles.navigationText}>
+            <Text style={styles.subtitle}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+              <Text style={styles.linkText}>Sign up</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>🔐 Login</Text>
+            
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#666"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
               
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>🔐 Login</Text>
-                <Text style={styles.cardText}>
-                  Login functionality will be implemented here
-                </Text>
-                
-                <TouchableOpacity 
-                  style={styles.button} 
-                  onPress={() => navigation.goBack()}
-                >
-                  <Text style={styles.buttonText}>Back to Home</Text>
-                </TouchableOpacity>
-              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#666"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
             </View>
-          </LinearGradient>
-        </SafeAreaView>
+            
+            <TouchableOpacity 
+              style={[styles.button, loading && styles.buttonDisabled]} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.buttonText}>Login</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backButtonText}>Back to Home</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
@@ -53,10 +139,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     marginTop: 20,
   },
   title: {
@@ -73,6 +160,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
+  },
+  navigationText: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  linkText: {
+    fontSize: 16,
+    color: '#87CEEB',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -96,19 +194,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1a365d',
     textAlign: 'center',
-    marginBottom: 10,
-  },
-  cardText: {
-    fontSize: 16,
-    color: '#4a5568',
-    textAlign: 'center',
-    lineHeight: 24,
     marginBottom: 20,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  input: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+    color: '#333',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   button: {
     backgroundColor: '#3182ce',
     paddingHorizontal: 30,
-    paddingVertical: 12,
+    paddingVertical: 15,
     borderRadius: 25,
     elevation: 2,
     shadowColor: '#000',
@@ -118,82 +231,24 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  buttonDisabled: {
+    backgroundColor: '#a0a0a0',
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  features: {
-    width: '100%',
-    maxWidth: 350,
-    marginBottom: 30,
+  backButton: {
+    paddingVertical: 10,
   },
-  feature: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 15,
-    alignItems: 'center',
-  },
-  featureIcon: {
-    fontSize: 30,
-    marginBottom: 8,
-  },
-  featureText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  featureDescription: {
-    color: 'rgba(255, 255, 255, 0.8)',
+  backButtonText: {
+    color: '#3182ce',
     fontSize: 14,
-    textAlign: 'center',
-  },
-  teamInfo: {
-    alignItems: 'center',
-    marginBottom: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
-    borderRadius: 10,
-    width: '100%',
-    maxWidth: 350,
-  },
-  teamTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  teamText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 16,
     fontWeight: '500',
-    marginBottom: 5,
-  },
-  teamMembers: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  status: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  statusText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  statusSubtext: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  versionText: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 11,
-    marginTop: 5,
   },
 });
