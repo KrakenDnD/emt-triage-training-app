@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "134317067216",
+    "project_id": "emt-triage-training-app",
+    "storage_bucket": "emt-triage-training-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:134317067216:android:504a2d98a0a7dbafb687d5",
+        "android_client_info": {
+          "package_name": "com.codeblue.emttriagetraining"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXb-6Vr3pXmBOQr19hDxHqz1L41EqFVdg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
