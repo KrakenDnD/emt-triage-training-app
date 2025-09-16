@@ -8,6 +8,7 @@ import Signup from './pages/signup.tsx';
 import StudentDash from './pages/studentdash.js';
 import InstructorDash from './pages/instructordashboard.js';
 
+
 const Stack = createStackNavigator();
 
 function HomeScreen({ navigation }) {
