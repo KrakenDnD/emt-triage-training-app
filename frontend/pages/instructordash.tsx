@@ -13,40 +13,17 @@ export default function Signup({navigation}) {
           >
             <View style={styles.scrollContent}>
               <View style={styles.header}>
-                <Text style={styles.title}>Sign up</Text>
+                <Text style={styles.title}>Dashboard</Text>
                 <Text style={styles.subtitle}>Enter your credentials</Text>
               </View>
-            <Text style={styles.title}>Sign up to your account</Text>
+            <Text style={styles.title}>dashboard</Text>
 
               
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>🔐 Sign up</Text>
+                <Text style={styles.cardTitle}>🔐 dashboard</Text>
                 <Text style={styles.cardText}>
-                  Signup functionality will be implemented here
+                  dashboard functionality will be implemented here
                 </Text>
-                {/* Status Selection */}
-          <View style={styles.statusContainer}>
-            <Text style={styles.statusLabel}>Select your status:</Text>
-            
-            <TouchableOpacity
-              style={styles.radioOption}
-              onPress={() => setStatus('student')}
-            >
-              <View style={styles.radioCircle}>
-                {status === 'student' && <View style={styles.radioDot} />}
-              </View>
-              <Text style={styles.radioText}>Student</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.radioOption, styles.lastRadioOption]}
-              onPress={() => setStatus('instructor')}
-            >
-              <View style={styles.radioCircle}>
-                {status === 'instructor' && <View style={styles.radioDot} />}
-              </View>
-              <Text style={styles.radioText}>Instructor</Text>
-            </TouchableOpacity>
-          </View>
                 
                 <TouchableOpacity 
                   style={styles.button} 
