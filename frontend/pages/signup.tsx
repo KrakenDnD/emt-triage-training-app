@@ -1,39 +1,185 @@
-import React from 'react';
-import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  StatusBar, 
+  TextInput, 
+  Alert,
+  ActivityIndicator 
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
 
-export default function Signup({navigation}) {
+export default function Signup({ navigation }) {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleSignup = async () => {
+    // Validation
+    if (!fullName || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Create user account
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Update user profile with display name
+      await updateProfile(userCredential.user, {
+        displayName: fullName
+      });
+
+      console.log('✅ User created:', userCredential.user.email);
+      
+      Alert.alert(
+        'Success', 
+        'Account created successfully! You can now login.',
+        [
+          { 
+            text: 'OK', 
+            onPress: () => navigation.navigate('Login') 
+          }
+        ]
+      );
+      
+    } catch (error) {
+      console.error('❌ Signup error:', error);
+      
+      // Handle different error types
+      let errorMessage = 'Failed to create account. Please try again.';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger password.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      Alert.alert('Signup Error', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-          <StatusBar barStyle="light-content" backgroundColor="#1a365d" />
-          <LinearGradient
-            colors={['#1a365d', '#2c5282', '#3182ce']}
-            style={styles.gradient}
-          >
-            <View style={styles.scrollContent}>
-              <View style={styles.header}>
-                <Text style={styles.title}>Sign up</Text>
-                <Text style={styles.subtitle}>Enter your credentials</Text>
-              </View>
-            <Text style={styles.title}>Sign up to your account</Text>
+      <StatusBar barStyle="light-content" backgroundColor="#1a365d" />
+      <LinearGradient
+        colors={['#1a365d', '#2c5282', '#3182ce']}
+        style={styles.gradient}
+      >
+        <View style={styles.scrollContent}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Sign Up</Text>
+            <Text style={styles.subtitle}>Create your account</Text>
+          </View>
 
+          <View style={styles.navigationText}>
+            <Text style={styles.subtitle}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.linkText}>Login</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>🚑 Join EMT Training</Text>
+            
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Full Name"
+                placeholderTextColor="#666"
+                value={fullName}
+                onChangeText={setFullName}
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
               
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>🔐 Sign up</Text>
-                <Text style={styles.cardText}>
-                  Signup functionality will be implemented here
-                </Text>
-                
-                <TouchableOpacity 
-                  style={styles.button} 
-                  onPress={() => navigation.goBack()}
-                >
-                  <Text style={styles.buttonText}>Back to Home</Text>
-                </TouchableOpacity>
-              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#666"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Password (min 6 characters)"
+                placeholderTextColor="#666"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                placeholderTextColor="#666"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
             </View>
-          </LinearGradient>
-        </SafeAreaView>
+            
+            <TouchableOpacity 
+              style={[styles.button, loading && styles.buttonDisabled]} 
+              onPress={handleSignup}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.buttonText}>Create Account</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backButtonText}>Back to Home</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
@@ -48,10 +194,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     marginTop: 20,
   },
   title: {
@@ -68,6 +215,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
+  },
+  navigationText: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  linkText: {
+    fontSize: 16,
+    color: '#87CEEB',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -91,19 +249,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1a365d',
     textAlign: 'center',
-    marginBottom: 10,
-  },
-  cardText: {
-    fontSize: 16,
-    color: '#4a5568',
-    textAlign: 'center',
-    lineHeight: 24,
     marginBottom: 20,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  input: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+    color: '#333',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   button: {
     backgroundColor: '#3182ce',
     paddingHorizontal: 30,
-    paddingVertical: 12,
+    paddingVertical: 15,
     borderRadius: 25,
     elevation: 2,
     shadowColor: '#000',
@@ -113,82 +286,24 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  buttonDisabled: {
+    backgroundColor: '#a0a0a0',
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  features: {
-    width: '100%',
-    maxWidth: 350,
-    marginBottom: 30,
+  backButton: {
+    paddingVertical: 10,
   },
-  feature: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 15,
-    alignItems: 'center',
-  },
-  featureIcon: {
-    fontSize: 30,
-    marginBottom: 8,
-  },
-  featureText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  featureDescription: {
-    color: 'rgba(255, 255, 255, 0.8)',
+  backButtonText: {
+    color: '#3182ce',
     fontSize: 14,
-    textAlign: 'center',
-  },
-  teamInfo: {
-    alignItems: 'center',
-    marginBottom: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
-    borderRadius: 10,
-    width: '100%',
-    maxWidth: 350,
-  },
-  teamTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  teamText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 16,
     fontWeight: '500',
-    marginBottom: 5,
-  },
-  teamMembers: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  status: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  statusText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  statusSubtext: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  versionText: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 11,
-    marginTop: 5,
   },
 });
