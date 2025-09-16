@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator 
 } from 'react-native';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
@@ -92,6 +93,7 @@ export default function Signup({ navigation }) {
     }
   };
 
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a365d" />
@@ -126,36 +128,7 @@ export default function Signup({ navigation }) {
                 autoCorrect={false}
               />
               
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#666"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Password (min 6 characters)"
-                placeholderTextColor="#666"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
 
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm Password"
-                placeholderTextColor="#666"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
             </View>
             
             <TouchableOpacity 
@@ -306,4 +279,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  radioOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    lastRadioOption: {
+      marginBottom: 0,
+    },
+    radioCircle: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: '#1a365d',
+      marginRight: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: '#4a5568',
+    },
+    radioText: {
+      fontSize: 16,
+      color: '#000000',
+    },
+    input: {
+      height: 48,
+      backgroundColor: '#e3e3e3',
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      fontSize: 16,
+      color: '#0000',
+    },
+    inputError: {
+      borderColor: '#c4140e',
+    },
+    entryField: {
+      marginBottom: 70,
+      width: '100%',
+      flex: 1,
+    },
+    statusContainer: {
+      marginBottom: 32,
+    },
+    statusLabel: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: '#0000',
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: '#2c5282',
+      marginBottom: 8,
+    },
 });
