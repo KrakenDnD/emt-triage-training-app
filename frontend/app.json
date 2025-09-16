@@ -17,13 +17,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.codeblue.emttriagetraining"
     },
     "android": {
       "adaptiveIcon": {
 
         "backgroundColor": "#1a365d"
-      }
+      },
+      "package": "com.codeblue.emttriagetraining"
     },
     "web": {
       "bundler": "metro"
