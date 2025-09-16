@@ -5,8 +5,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Login from './pages/login.tsx';
 import Signup from './pages/signup.tsx';
-import StudentDash from './pages/studentdash.js';
-import InstructorDash from './pages/instructordashboard.js';
+import StudentDash from './pages/studentdash.tsx';
+import InstructorDash from './pages/instructordash.tsx';
 
 
 const Stack = createStackNavigator();
@@ -97,7 +97,7 @@ export default function App() {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="StudentDash" component={StudentDash} />
-        <Stack.Screen name="InstructorDash" component={InstructorDash} />
+        <Stack.Screen name="InstructorDash" component={InstructorDash} /> 
       </Stack.Navigator>
     </NavigationContainer>
   );
