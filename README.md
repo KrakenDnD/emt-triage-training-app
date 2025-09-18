@@ -25,6 +25,32 @@ The EMT Triage Training App is designed to provide comprehensive training for EM
 
 This application is intended exclusively for individuals pursuing or engaged in emergency medical training. Users sensitive to medical content, graphic imagery, or emergency situations should exercise discretion. If you experience distress while using this application, discontinue use immediately.
 
+## Mental Health & Wellness Resources
+
+Training and working in emergency medical services can be emotionally challenging. If you or someone you know needs support:
+
+### Crisis Support
+- **National Suicide Prevention Lifeline**: 988 (24/7)
+- **Crisis Text Line**: Text HOME to 741741 (24/7)
+- **SAMHSA National Helpline**: 1-800-662-4357 (24/7)
+
+### First Responder Support
+- **First Responder Trauma Counselors**: [firstrespondersupport.org](https://firstrespondersupport.org)
+- **Safe Call Now**: 1-800-267-5732 (confidential help for first responders)
+- **International Association of Fire Chiefs Behavioral Health**: [iafc.org/topics-and-tools/resources/resource/behavioral-health-program-for-fire-and-ems](https://www.iafc.org/topics-and-tools/resources/resource/behavioral-health-program-for-fire-and-ems)
+- **Code Green Campaign**: [codegreencampaign.org](https://codegreencampaign.org) (EMS mental health resources)
+
+### Professional Resources
+- **National Alliance on Mental Illness (NAMI)**: 1-800-950-6264 or [nami.org](https://nami.org)
+- **Mental Health America**: [mhanational.org](https://mhanational.org)
+- **Employee Assistance Programs**: Contact your employer for confidential counseling services
+
+### Self-Care Reminders
+- This training content may trigger emotional responses - this is normal
+- Take breaks when needed during training sessions
+- Seek support from colleagues, supervisors, or mental health professionals
+- Remember that asking for help is a sign of strength, not weakness
+
 ## 👥 Development Team - CodeBlue Collective
 
 - **Meghan Lawrence** - Frontend Development & UI/UX Design
