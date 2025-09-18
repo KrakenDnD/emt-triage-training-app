@@ -53,9 +53,9 @@ Training and working in emergency medical services can be emotionally challengin
 
 ## 👥 Development Team - CodeBlue Collective
 
-- **Meghan Lawrence** - Frontend Development & UI/UX Design
-- **Sophia Worsham** - Backend Development & Database Architecture  
-- **Daniel Hall** - AI Integration & System Architecture
+- **Meghan Lawrence** 
+- **Sophia Worsham**   
+- **Daniel Hall**
 
 ## 🛠 Technical Stack
 
