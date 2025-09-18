@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 Meghan Lawrence
+Copyright (c) 2025 CodeBlue Collective (Meghan Lawrence, Sophia Worsham, Daniel Hall)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,83 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Third-Party Services and APIs
+
+This application integrates with the following third-party services:
+
+### AI Services
+- **OpenAI GPT-4**: Subject to OpenAI's Terms of Service and Usage Policies
+- **Hugging Face Models**: Subject to Hugging Face's Terms of Service
+  - BioBERT (dmis-lab/biobert-base-cased-v1.1)
+  - DialoGPT (microsoft/DialoGPT-large)
+  - Sentence Transformers (sentence-transformers/all-MiniLM-L6-v2)
+
+### Firebase Services
+- **Firebase Authentication, Firestore, Storage**: Subject to Google Firebase Terms of Service
+
+## Medical Disclaimer
+
+**IMPORTANT MEDICAL DISCLAIMER:**
+
+This software is designed solely for educational and training purposes. It is NOT intended for:
+- Actual medical diagnosis
+- Real emergency medical treatment decisions
+- Professional medical advice
+- Clinical decision-making in real-world scenarios
+
+**Key Points:**
+- This application provides simulated training scenarios only
+- All medical content is for educational purposes
+- Users should not rely on this software for actual medical situations
+- Always consult qualified medical professionals for real medical emergencies
+- This software does not replace proper EMT certification or training programs
+
+## Content Warning
+
+**SENSITIVE MEDICAL CONTENT DISCLAIMER:**
+
+This application contains realistic emergency medical training scenarios that may include:
+- Descriptions of traumatic injuries and medical conditions
+- Visual content including medical images, injury photographs, and emergency procedures
+- Graphic medical imagery related to trauma, wounds, and emergency interventions
+- Simulated emergency situations involving severe medical distress
+- Medical terminology and procedures related to emergency care
+- Scenarios involving life-threatening conditions and medical interventions
+
+**Important Considerations:**
+- Content is designed for medical education and may be disturbing to some users
+- Visual medical content may include graphic images of injuries, medical procedures, and emergency situations
+- Training scenarios are realistic but fictional - no actual patients are depicted
+- Users sensitive to medical content, graphic imagery, descriptions of injuries, or emergency situations should use discretion
+- The application is intended for individuals pursuing or engaged in emergency medical training
+- If you experience distress while using this application, discontinue use and seek appropriate support
+- This content is not suitable for general audiences and is specifically designed for medical education purposes
+- Visual content adheres to educational standards but may be graphic in nature for training authenticity
+
+## Educational Use
+
+This project is developed as part of an academic course and is intended for:
+- Educational demonstration
+- Software development learning
+- Academic evaluation
+- Portfolio purposes
+
+## AI Content Usage
+
+AI-generated content in this application:
+- Is used for educational simulation purposes only
+- Should not be considered medically authoritative
+- May contain inaccuracies and should be verified against official medical protocols
+- Is generated using various AI models and may reflect limitations of those systems
+
+## Data Privacy
+
+Users of this application should be aware that:
+- Training data and responses may be processed by third-party AI services
+- Firebase handles authentication and data storage according to their privacy policies
+- No real patient data should ever be entered into this system
+
+## Contact
+
+For questions about this license or the software, contact the CodeBlue Collective development team.
