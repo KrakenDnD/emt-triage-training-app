@@ -15,7 +15,15 @@ The EMT Triage Training App is designed to provide comprehensive training for EM
 - **Real-time Feedback**: Instant AI-powered feedback and coaching
 - **Cross-Platform**: Available on iOS, Android, and web platforms
 
-**Content Warning**: This application contains realistic emergency medical training scenarios that may include descriptions of traumatic injuries, medical distress, emergency situations, and visual medical content including graphic images of injuries and medical procedures. Content is designed for medical education purposes and may be disturbing to some users. Intended for individuals pursuing emergency medical training.
+**Content Warning**: This application contains realistic emergency medical training scenarios that may include:
+- Descriptions of traumatic injuries, wounds, and severe medical conditions
+- Visual medical content including graphic images of injuries, medical procedures, and emergency interventions
+- Simulated emergency situations involving life-threatening conditions and medical distress
+- Medical terminology and procedures related to trauma care and emergency medicine
+- Realistic depictions of emergency scenarios that may be disturbing or triggering
+- Content designed for medical education that may not be suitable for general audiences
+
+This application is intended exclusively for individuals pursuing or engaged in emergency medical training. Users sensitive to medical content, graphic imagery, or emergency situations should exercise discretion. If you experience distress while using this application, discontinue use immediately.
 
 ## 👥 Development Team - CodeBlue Collective
 
@@ -249,4 +257,4 @@ For technical support or questions about this project:
 ---
 
 **Version**: 0.1.0 - Development Phase (Week 1 of 10)
-**Last Updated**: September 2025
+**Last Updated**: January 2025
