@@ -1,64 +1,58 @@
-🚑 EMT Triage Training App – Team Setup Guide
-Welcome to the dev team! Follow these steps to get the app running locally using M’s codebase.
+markdown
+# 🛠 EMT Triage Training App – Dev Commands Reference
 
-🧰 Prerequisites
-Make sure these are installed:
+This document lists all the key `npm` and `npx` commands used to install dependencies, run the app, deploy functions, and manage the project.
 
-Node.js (v18 or higher) → Download
+---
 
-npm (comes with Node)
+## 📦 Dependency Installation
 
-Expo CLI → npm install -g expo-cli
-
-Firebase CLI → npm install -g firebase-tools
-
-Git → Download
-
-VS Code or your preferred editor
-
-📦 Project Structure
-Code
-EMT-TRIAGE-TRAINING/
-├── frontend/       ← Expo app (React Native)
-├── functions/      ← Firebase Cloud Functions (AI endpoints)
-🚀 Setup Steps
-1. Clone the Repo
-bash
-git clone https://github.com/your-org/emt-triage-training.git
-cd emt-triage-training
-2. Install Dependencies
-Frontend
-bash
-cd frontend
-npm install
-Backend (Cloud Functions)
-bash
-cd ../functions
-npm install
-3. Environment Files
-You’ll receive two .env files from M:
-
-frontend/.env → contains Firebase config
-
-functions/.env → contains Hugging Face + OpenAI keys
-
-✅ Place them in the correct folders before running anything.
-
-4. Run the App
-Frontend (Expo)
-bash
-cd frontend
-npx expo start
-Use Expo Go or a simulator to preview the app.
-
-Backend (Firebase Functions)
-bash
-cd ../functions
-firebase login
-firebase deploy --only functions
-5. Optional: Enable Auth Persistence
-If you see a warning about Firebase Auth persistence, run:
-
+### 🔹 Install Firebase SDK (frontend)
+```bash
+npm install firebase
+🔹 Install AsyncStorage for Auth Persistence
 bash
 npm install @react-native-async-storage/async-storage
-No code changes needed — M already wired it up.
+🔹 Install Safe Area Context (replaces deprecated SafeAreaView)
+bash
+npm install react-native-safe-area-context
+🔹 Install Cloud Functions Dependencies (backend)
+bash
+cd functions
+npm install
+🚀 Expo Commands
+🔹 Start the Expo App (with cache clear)
+bash
+npx expo start --clear
+Use this after editing .env or making major config changes.
+
+🔥 Firebase CLI Commands
+🔹 Login to Firebase
+bash
+firebase login
+🔹 Initialize Firebase Functions (only needed once)
+bash
+firebase init functions
+🔹 Deploy Cloud Functions
+bash
+firebase deploy --only functions
+⚠️ Requires Blaze plan if using external APIs like Hugging Face or OpenAI.
+
+🧪 Emulator (Optional for Local Dev)
+🔹 Start Firebase Emulator Suite
+bash
+firebase emulators:start
+Use this if you’re not deploying to the cloud and want to test locally.
+
+🧼 General Project Setup
+🔹 Install Expo CLI (global)
+bash
+npm install -g expo-cli
+🔹 Install Firebase CLI (global)
+bash
+npm install -g firebase-tools
+Let me know if you want to add Git commands, .env setup instructions, or a checklist for onboarding new teammates. You’re organizing this like a pro.
+
+Code
+
+Let me know if you want this bundled with a `SETUP.md`, `.env.example`, or a `README` template for the whole repo. You’re building a dev experience your team will love.
