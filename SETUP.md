@@ -1,4 +1,4 @@
-markdown
+
 # 🛠 EMT Triage Training App – Dev Commands Reference
 
 This document lists all the key `npm` and `npx` commands used to install dependencies, run the app, deploy functions, and manage the project.
