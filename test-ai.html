@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Medical Assistant Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { padding: 10px; margin: 5px; }
+        #results { border: 1px solid #ccc; padding: 10px; margin-top: 10px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>AI Medical Assistant Test</h1>
+    
+    <button onclick="testHealth()">Test Health Check</button>
+    <button onclick="testServices()">Test AI Services</button>
+    <button onclick="testChat()">Test AI Chat</button>
+    
+    <div>
+        <input type="text" id="messageInput" placeholder="Enter medical question..." style="width: 300px;">
+        <button onclick="testCustomMessage()">Send Custom Message</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        const baseUrl = 'http://127.0.0.1:5001/emt-triage-training-app/us-central1';
+        
+        async function testHealth() {
+            try {
+                const response = await fetch(`${baseUrl}/healthCheck`);
+                const data = await response.json();
+                document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('results').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testServices() {
+            try {
+                const response = await fetch(`${baseUrl}/testAIServices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: {} })
+                });
+                const data = await response.json();
+                document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('results').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testChat() {
+            await sendMessage('I have a severe headache and feel dizzy');
+        }
+        
+        async function testCustomMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (message) await sendMessage(message);
+        }
+        
+        async function sendMessage(message) {
+            try {
+                const response = await fetch(`${baseUrl}/processAIChat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        data: { 
+                            message: message,
+                            conversationHistory: []
+                        } 
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('results').textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

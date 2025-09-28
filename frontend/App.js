@@ -1,5 +1,7 @@
 // import React from 'react';
-import { StyleSheet, Text, View, StatusBar, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import './firebaseConfig';
+import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';  
 import { LinearGradient } from 'expo-linear-gradient';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -7,6 +9,7 @@ import Login from './pages/login.tsx';
 import Signup from './pages/signup.tsx';
 import StudentDash from './pages/studentdash.tsx';
 import InstructorDash from './pages/instructordash.tsx';
+import AIChatScreen from './src/screens/AIChatScreen.js';
 
 
 const Stack = createStackNavigator();
@@ -45,6 +48,14 @@ function HomeScreen({ navigation }) {
             >
               <Text style={styles.buttonText}>Start Training</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#28a745', marginTop: 15 }]}
+              onPress={() => navigation.navigate('AIChat')}
+            >
+              <Text style={styles.buttonText}>🤖 Try AI Assistant</Text>
+            </TouchableOpacity>
+            
           </View>
 
           <View style={styles.features}>
@@ -98,6 +109,7 @@ export default function App() {
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="StudentDash" component={StudentDash} />
         <Stack.Screen name="InstructorDash" component={InstructorDash} /> 
+        <Stack.Screen name="AIChat" component={AIChatScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
