@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+
+
 
 export default function Signup({navigation}) {
     const [status, setStatus] = useState('Please select status');
@@ -31,6 +34,12 @@ export default function Signup({navigation}) {
                 >
                   <Text style={styles.buttonText}>Back to Home</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.button, styles.aiButton,]}
+                >
+                  <Text style={styles.buttonText}>🤖 Try AI Assistant</Text>
+                  </TouchableOpacity>  
               </View>
             </View>
           </LinearGradient>
@@ -252,4 +261,7 @@ const styles = StyleSheet.create({
       color: '#2c5282',
       marginBottom: 8,
     },
+    aiButton: {
+      backgroundColor: '#28a745',
+      marginTop: 10,},
 });

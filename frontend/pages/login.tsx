@@ -3,16 +3,18 @@ import {
   StyleSheet, 
   Text, 
   View, 
-  SafeAreaView, 
   TouchableOpacity, 
   StatusBar, 
   TextInput, 
   Alert,
   ActivityIndicator 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';  
 import { LinearGradient } from 'expo-linear-gradient';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+
+
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState('');
