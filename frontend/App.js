@@ -12,7 +12,7 @@ import InstructorDash from './pages/instructordash.tsx';
 import AIChatScreen from './src/screens/AIChatScreen.js';
 import Loading from './pages/loading.tsx';
 import ConnectionLost from './pages/connectionlost.tsx';
-import RefrenceLib from './pages/refrencelib.tsx';
+import ReferenceLib from './pages/referencelib';
 import Glossary from './pages/glossary'
 
 
@@ -21,7 +21,7 @@ const Stack = createStackNavigator();
 function HomeScreen({ navigation }) {
   const handleStartTraining = () => {
     try {
-      navigation.navigate('RefrenceLib');
+      navigation.navigate('ReferenceLib');
     } catch (error) {
       console.log("Nav error::", error);
     }
@@ -116,7 +116,7 @@ export default function App() {
         <Stack.Screen name="AIChat" component={AIChatScreen} />
         <Stack.Screen name="Loading" component={Loading} />
         <Stack.Screen name="ConnectionLost" component={ConnectionLost} />
-        <Stack.Screen name="RefrenceLib" component={RefrenceLib} />
+        <Stack.Screen name="ReferenceLib" component={ReferenceLib} />
         <Stack.Screen name="Glossary" component={Glossary} />
       </Stack.Navigator>
     </NavigationContainer>

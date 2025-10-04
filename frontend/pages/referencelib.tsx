@@ -38,8 +38,6 @@ const ReferenceLibrary = ({ navigation }) => {
   ];
 
   const handleSectionPress = (route) => {
-  console.log('Navigating to:', route);
-  console.log('Navigation object:', navigation); // Add this to debug
   try {
     navigation.navigate(route);
   } catch (error) {
@@ -147,7 +145,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderTopWidth: 8,
     borderBottomWidth: 8,
-    borderLeftColor: '#2B4C7E',
+    borderLeftColor: '#59c930ff',
     borderRightColor: 'transparent',
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
