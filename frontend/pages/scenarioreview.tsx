@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface Review {
-  id: string;
   score: string;
   stren1: string;
   stren2: string;
@@ -17,7 +16,6 @@ interface Review {
 
 export default function scenarioReview({ navigation }) {
   const Review: Review = {
-    id: '1',
     score: '90',
     stren1: 'Vitals',
     stren2: 'Bleeding Procedure',

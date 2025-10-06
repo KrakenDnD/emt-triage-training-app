@@ -15,6 +15,7 @@ import ConnectionLost from './pages/connectionlost.tsx';
 import ReferenceLib from './pages/referencelib';
 import Glossary from './pages/glossary'
 import Review from './pages/scenarioreview'
+import ScenarioSelect from './pages/scenarioselect'
 
 
 const Stack = createStackNavigator();
@@ -22,7 +23,7 @@ const Stack = createStackNavigator();
 function HomeScreen({ navigation }) {
   const handleStartTraining = () => {
     try {
-      navigation.navigate('Review');
+      navigation.navigate('ScenarioSelect');
     } catch (error) {
       console.log("Nav error::", error);
     }
@@ -120,6 +121,7 @@ export default function App() {
         <Stack.Screen name="ReferenceLib" component={ReferenceLib} />
         <Stack.Screen name="Glossary" component={Glossary} />
         <Stack.Screen name="Review" component={Review} />
+        <Stack.Screen name="ScenarioSelect" component={ScenarioSelect} />
       </Stack.Navigator>
     </NavigationContainer>
   );
