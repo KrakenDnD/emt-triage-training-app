@@ -6,6 +6,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 const ReferenceLibrary = ({ navigation }) => {
   const sections = [
     {
+      title: 'Medical Conditions Guide',
+      description: 'Quickly reference the START and JumpSTART triage systems to prioritize patients effectively during mass casualty incidents. Built for speed and accuracy in chaotic environments.',
+      bgColor: '#B8C5D6',
+      route: 'Conditions',
+    },
+    {
       title: 'Mental Health & Wellness',
       description: 'Training and working in emergency medical services can be emotionally challenging. If you or someone you know needs support, click here.',
       bgColor: '#C8CDD4',

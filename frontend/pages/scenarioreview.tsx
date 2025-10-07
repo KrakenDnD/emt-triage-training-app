@@ -35,7 +35,7 @@ export default function scenarioReview({ navigation }) {
 
   const handleContinue = () => {
     try {
-      navigation.navigate('Home'); //replace w scenario selection screen
+      navigation.navigate('ScenarioSelect'); //replace w scenario selection screen
     } catch (error) {
       console.error('Navigation error:', error);
     }
