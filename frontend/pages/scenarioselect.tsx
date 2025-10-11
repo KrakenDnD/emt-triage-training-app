@@ -144,10 +144,10 @@ const ScenarioSelection = ({ navigation, route }) => {
 
   const handleScenarioPress = (scenario) => {
     try {
-      navigation.navigate('ScenarioDetail', { //REPLACE WHEN BACKEND IS FINISHED
-        scenarioId: scenario.id,
-        scenario: scenario
-      });
+      navigation.navigate('Review')//, { //REPLACE WHEN BACKEND IS FINISHED
+    //    scenarioId: scenario.id,
+    //    scenario: scenario
+    //  });
     } catch (error) {
       console.error('Navigation error:', error);
     }

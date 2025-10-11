@@ -26,7 +26,7 @@ const Stack = createStackNavigator();
 function HomeScreen({ navigation }) {
   const handleStartTraining = () => {
     try {
-      navigation.navigate('StudentProfile');
+      navigation.navigate('Login');
     } catch (error) {
       console.log("Nav error::", error);
     }

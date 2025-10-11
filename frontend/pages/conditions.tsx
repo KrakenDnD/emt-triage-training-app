@@ -17,7 +17,7 @@ export default function MedicalConditions({ navigation }) {
 
   const handleBack = () => {
     try {
-    navigation.navigate('ReferenceLib');
+    navigation.goBack();
   } catch (error) {
     console.error('Navigation error:', error);
   }
