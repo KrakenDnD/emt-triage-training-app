@@ -6,6 +6,7 @@ import {
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
@@ -26,5 +27,10 @@ const auth = initializeAuth(app, {
 
 const firestore = getFirestore(app);
 const storage = getStorage(app);
+const functions = getFunctions(app);
 
-export { auth, firestore, storage };
+if (__DEV__) {
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+}
+
+export { auth, firestore, storage, functions };
