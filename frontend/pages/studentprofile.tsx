@@ -348,7 +348,7 @@ export default function StudentProfile({ navigation }) {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.mainButton}
-        //    onPress={() => handleButtonPress('Question')} 
+            onPress={() => handleButtonPress('AIChat')} 
           >
             <Text style={styles.mainButtonText}>Ask EMTelligence A Question</Text>
           </TouchableOpacity>

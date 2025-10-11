@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import NetInfo from '@react-native-community/netinfo';
+import { useEffect, useRef } from 'react';
 import Login from './pages/login.tsx';
 import Signup from './pages/signup.tsx';
 import StudentDash from './pages/studentdash.tsx';
@@ -19,6 +21,7 @@ import ScenarioSelect from './pages/scenarioselect'
 import Conditions from './pages/conditions'
 import StudentProfile from './pages/studentprofile'
 import InstructorProfile from './pages/instructorprofile'
+
 
 
 const Stack = createStackNavigator();
@@ -105,8 +108,19 @@ function HomeScreen({ navigation }) {
 }
 
 export default function App() {
+    const navigationRef = useRef();
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (!state.isConnected) {
+        navigationRef.current?.navigate('ConnectionLost');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{
