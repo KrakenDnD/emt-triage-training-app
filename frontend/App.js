@@ -5,11 +5,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import NetInfo from '@react-native-community/netinfo';
+import { useEffect, useRef } from 'react';
 import Login from './pages/login.tsx';
 import Signup from './pages/signup.tsx';
 import StudentDash from './pages/studentdash.tsx';
 import InstructorDash from './pages/instructordash.tsx';
 import AIChatScreen from './src/screens/AIChatScreen.js';
+import Loading from './pages/loading.tsx';
+import ConnectionLost from './pages/connectionlost.tsx';
+import ReferenceLib from './pages/referencelib';
+import Glossary from './pages/glossary'
+import Review from './pages/scenarioreview'
+import ScenarioSelect from './pages/scenarioselect'
+import Conditions from './pages/conditions'
+import StudentProfile from './pages/studentprofile'
+import InstructorProfile from './pages/instructorprofile'
+
 
 
 const Stack = createStackNavigator();
@@ -96,8 +108,19 @@ function HomeScreen({ navigation }) {
 }
 
 export default function App() {
+    const navigationRef = useRef();
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (!state.isConnected) {
+        navigationRef.current?.navigate('ConnectionLost');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{
@@ -110,6 +133,15 @@ export default function App() {
         <Stack.Screen name="StudentDash" component={StudentDash} />
         <Stack.Screen name="InstructorDash" component={InstructorDash} /> 
         <Stack.Screen name="AIChat" component={AIChatScreen} />
+        <Stack.Screen name="Loading" component={Loading} />
+        <Stack.Screen name="ConnectionLost" component={ConnectionLost} />
+        <Stack.Screen name="ReferenceLib" component={ReferenceLib} />
+        <Stack.Screen name="Glossary" component={Glossary} />
+        <Stack.Screen name="Review" component={Review} />
+        <Stack.Screen name="ScenarioSelect" component={ScenarioSelect} />
+        <Stack.Screen name="Conditions" component={Conditions} />
+        <Stack.Screen name="StudentProfile" component={StudentProfile} />
+        <Stack.Screen name="InstructorProfile" component={InstructorProfile} />
       </Stack.Navigator>
     </NavigationContainer>
   );

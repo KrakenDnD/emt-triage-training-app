@@ -123,7 +123,13 @@ export default function Login({ navigation }) {
             >
               <Text style={styles.backButtonText}>Back to Home</Text>
             </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => navigation.navigate('StudentProfile')}
+            >
+              <Text style={styles.backButtonText}>TESTING</Text>
+            </TouchableOpacity>
+            </View>
         </View>
       </LinearGradient>
     </SafeAreaView>
