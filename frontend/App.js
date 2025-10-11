@@ -17,6 +17,8 @@ import Glossary from './pages/glossary'
 import Review from './pages/scenarioreview'
 import ScenarioSelect from './pages/scenarioselect'
 import Conditions from './pages/conditions'
+import StudentProfile from './pages/studentprofile'
+import InstructorProfile from './pages/instructorprofile'
 
 
 const Stack = createStackNavigator();
@@ -24,7 +26,7 @@ const Stack = createStackNavigator();
 function HomeScreen({ navigation }) {
   const handleStartTraining = () => {
     try {
-      navigation.navigate('ReferenceLib');
+      navigation.navigate('StudentProfile');
     } catch (error) {
       console.log("Nav error::", error);
     }
@@ -124,6 +126,8 @@ export default function App() {
         <Stack.Screen name="Review" component={Review} />
         <Stack.Screen name="ScenarioSelect" component={ScenarioSelect} />
         <Stack.Screen name="Conditions" component={Conditions} />
+        <Stack.Screen name="StudentProfile" component={StudentProfile} />
+        <Stack.Screen name="InstructorProfile" component={InstructorProfile} />
       </Stack.Navigator>
     </NavigationContainer>
   );
