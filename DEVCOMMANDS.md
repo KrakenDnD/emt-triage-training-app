@@ -53,4 +53,4 @@ bash
 npm install -g firebase-tools
 Code
 
-Let me know if you want to add Git commands, `.env` setup instructions, or a checklist for onboarding new teammates. You’re organizing this like a pro.
+
