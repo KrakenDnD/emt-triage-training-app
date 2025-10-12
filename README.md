@@ -55,7 +55,7 @@ Training and working in emergency medical services can be emotionally challengin
 
 - **Meghan Lawrence** 
 - **Sophia Worsham**   
-- **Daniel Hall**
+
 
 ## 🛠 Technical Stack
 
