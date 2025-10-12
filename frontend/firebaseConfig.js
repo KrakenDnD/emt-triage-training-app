@@ -19,6 +19,8 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// ✅ Add this log right here
+console.log('🔍 Firebase Config:', firebaseConfig);
 const app = initializeApp(firebaseConfig);
 
 const auth = initializeAuth(app, {
@@ -33,4 +35,4 @@ if (__DEV__) {
   connectFunctionsEmulator(functions, 'localhost', 5001);
 }
 
-export { auth, firestore, storage, functions };
+export { app, auth, firestore, storage, functions };

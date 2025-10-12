@@ -1,35 +1,86 @@
-import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
-import app from '../../firebaseConfig';
+const BASE_URL = 'https://us-central1-emt-triage-training-app.cloudfunctions.net/api';
+
+
 
 class AIService {
-  constructor() {
-    this.functions = getFunctions(app);
-    
-    // Connect to local emulator during development
-    if (__DEV__) {
-      connectFunctionsEmulator(this.functions, 'localhost', 5001);
-    }
-  }
-
   async processMessage(message, conversationHistory = []) {
     try {
-      const processAIChat = httpsCallable(this.functions, 'processAIChat');
-      const result = await processAIChat({ message, conversationHistory });
-      return result.data;
+      const response = await fetch(`${BASE_URL}/process-ai-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, conversationHistory })
+      });
+
+      const text = await response.text();
+      console.log('🧾 Raw response:', text);
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (parseError) {
+        console.error('❌ JSON Parse Error:', parseError);
+        return {
+          success: false,
+          response: null,
+          metadata: null,
+          error: 'Invalid JSON response from backend'
+        };
+      }
+
+      console.log('✅ Parsed AI Response:', result);
+
+      return {
+        success: true,
+        response: result.response,
+        metadata: result.metadata
+      };
     } catch (error) {
-      console.error('AI Service Error:', error);
-      throw error;
+      console.error('❌ AI Service Error:', error);
+      return {
+        success: false,
+        response: null,
+        metadata: null,
+        error: error.message
+      };
     }
   }
 
   async testServices() {
     try {
-      const testAIServices = httpsCallable(this.functions, 'testAIServices');
-      const result = await testAIServices({});
-      return result.data;
+      const response = await fetch(`${BASE_URL}/test-ai-services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const text = await response.text();
+      console.log('🧪 Raw test response:', text);
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (parseError) {
+        console.error('❌ Test JSON Parse Error:', parseError);
+        return {
+          success: false,
+          services: null,
+          error: 'Invalid JSON response from test endpoint'
+        };
+      }
+
+      console.log('🧪 Parsed Test Results:', result);
+
+      return {
+        success: true,
+        services: result.services,
+        timestamp: result.timestamp
+      };
     } catch (error) {
-      console.error('AI Test Error:', error);
-      throw error;
+      console.error('❌ AI Test Error:', error);
+      return {
+        success: false,
+        services: null,
+        error: error.message
+      };
     }
   }
 }

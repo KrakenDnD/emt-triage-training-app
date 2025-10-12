@@ -1,13 +1,26 @@
 require('dotenv').config();
-const { onCall, onRequest } = require('firebase-functions/v2/https');
+const { onRequest } = require('firebase-functions/v2/https');
+const express = require('express');
+const cors = require('cors');
 const { HfInference } = require('@huggingface/inference');
-
 const hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
+const app = express();
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
+app.use(cors());
+app.use(express.json());
+
+// 🔍 Scenario detection
 const MEDICAL_SCENARIOS = {
   emergency: {
     triggers: ['chest pain', 'difficulty breathing', 'severe', 'emergency', 'unconscious'],
-    systemPrompt: 'You are an emergency medical assistant. Advise immediate care calmly but urgently.',
+    systemPrompt: 'You are an emergency medical assistant.',
     template: '🚨 Emergency: {response}\n\nCall 911 or go to the ER immediately.'
   },
   mental_health: {
@@ -49,7 +62,6 @@ async function analyzeMedicalText(text) {
       keywords: text.split(' ').filter(w => w.length > 4)
     };
   } catch (error) {
-    console.error('BioBERT error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -62,14 +74,14 @@ async function generateConversation(message, history = []) {
       { role: 'user', content: message }
     ];
     const response = await hf.chatCompletion({
-      model: 'openai/gpt-oss-120b',
+      model: 'mistralai/Mistral-7B-Instruct-v0.1',
       messages,
       parameters: { max_new_tokens: 80, temperature: 0.7 }
     });
+
     const content = response?.choices?.[0]?.message?.content?.trim() || '';
     return { success: true, response: content, confidence: Math.min(0.9, content.length / 50) };
   } catch (error) {
-    console.error('OSS 120B error:', error);
     return await generateDialoGPTFallback(message);
   }
 }
@@ -84,7 +96,6 @@ async function generateDialoGPTFallback(message) {
     const text = response?.generated_text?.split('Assistant:')[1]?.trim() || 'Sorry, I couldn’t generate a response.';
     return { success: true, response: text, confidence: Math.min(0.7, text.length / 50) };
   } catch (error) {
-    console.error('DialoGPT error:', error);
     return { success: false, error: error.message, response: '⚠️ AI assistant failed to respond.' };
   }
 }
@@ -105,7 +116,6 @@ async function assessQuality(question, response) {
       assessment: score > 0.7 ? 'good' : score > 0.4 ? 'fair' : 'poor'
     };
   } catch (error) {
-    console.error('Sentence similarity error:', error);
     return { success: false, error: error.message, qualityScore: 0.5 };
   }
 }
@@ -139,7 +149,6 @@ async function processAIMessage(message, history = []) {
       }
     };
   } catch (error) {
-    console.error('AI orchestration error:', error);
     return {
       success: false,
       error: error.message,
@@ -148,17 +157,30 @@ async function processAIMessage(message, history = []) {
   }
 }
 
-exports.processAIChat = onCall({ timeoutSeconds: 300, memory: '1GiB' }, async (request) => {
-  const { message, conversationHistory = [] } = request.data;
-  if (!message) throw new Error('Message is required');
-  return await processAIMessage(message, conversationHistory);
+// 📣 Express endpoints
+app.post('/process-ai-chat', async (req, res) => {
+  const { message, conversationHistory = [] } = req.body;
+  console.log('📩 Incoming message:', message);
+  console.log('📜 History:', conversationHistory);
+
+  if (!message) return res.status(400).json({ error: 'Message is required' });
+
+  try {
+    const result = await processAIMessage(message, conversationHistory);
+    console.log('🧠 AI Result:', result);
+    res.json(result);
+  } catch (error) {
+    console.error('🔥 AI Processing Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-exports.testAIServices = onCall({}, async () => {
+
+app.post('/api/test-ai-services', async (req, res) => {
   const results = {};
   try {
     await hf.chatCompletion({
-      model: 'openai/gpt-oss-120b',
+      model: 'mistralai/Mistral-7B-Instruct-v0.1',
       messages: [{ role: 'user', content: 'Hello' }],
       parameters: { max_new_tokens: 5 }
     });
@@ -200,17 +222,15 @@ exports.testAIServices = onCall({}, async () => {
     results.similarity = { success: false, error: error.message };
   }
 
-  return {
+  res.json({
     timestamp: new Date().toISOString(),
     services: results
-  };
-});
-
-exports.healthCheck = onRequest({}, (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    services: ['oss-120b', 'biobert', 'dialogpt', 'similarity'],
-    version: '3.0.0'
   });
 });
+
+exports.api = onRequest({
+  region: 'us-central1',
+  allowUnauthenticated: true
+}, app);
+
+
