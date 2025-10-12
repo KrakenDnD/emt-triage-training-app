@@ -8,18 +8,24 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';  
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, firestore } from '../firebaseConfig';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-export default function Signup({ navigation }) {
+export default function Signup({ navigation }: { navigation: any }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'student' | 'instructor'>('student');
   const [loading, setLoading] = useState(false);
 
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -50,17 +56,17 @@ export default function Signup({ navigation }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: fullName });
 
-      // Create Firestore profile
       await setDoc(doc(firestore, 'users', userCredential.user.uid), {
         fullName,
         email,
+        role,
         createdAt: serverTimestamp(),
       });
 
       Alert.alert('Success', 'Account created successfully!', [
         { text: 'OK', onPress: () => navigation.navigate('Login') },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
       let errorMessage = 'Failed to create account. Please try again.';
       if (error.code === 'auth/email-already-in-use') {
@@ -82,73 +88,99 @@ export default function Signup({ navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a365d" />
       <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
-        <View style={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Sign Up</Text>
-            <Text style={styles.subtitle}>Create your account</Text>
-          </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+              <View style={styles.header}>
+                <Text style={styles.title}>Sign Up</Text>
+                <Text style={styles.subtitle}>Create your account</Text>
+              </View>
 
-          <View style={styles.navigationText}>
-            <Text style={styles.subtitle}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.linkText}>Login</Text>
-            </TouchableOpacity>
-          </View>
+              <View style={styles.navigationText}>
+                <Text style={styles.subtitle}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.linkText}>Login</Text>
+                </TouchableOpacity>
+              </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>🚑 Join EMT Training</Text>
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>🚑 Join EMT Training</Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              placeholderTextColor="#666"
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#666"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#666"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              placeholderTextColor="#666"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Full Name"
+                  placeholderTextColor="#666"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  autoCapitalize="words"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#666"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#666"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm Password"
+                  placeholderTextColor="#666"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                />
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleSignup}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
-              )}
-            </TouchableOpacity>
+                <View style={styles.roleSelector}>
+                  <Text style={styles.roleLabel}>Select your role:</Text>
+                  <View style={styles.roleOptions}>
+                    <TouchableOpacity
+                      style={[styles.roleButton, role === 'student' && styles.roleSelected]}
+                      onPress={() => setRole('student')}
+                    >
+                      <Text style={[styles.roleText, role === 'student' && styles.roleSelectedText]}>Student</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.roleButton, role === 'instructor' && styles.roleSelected]}
+                      onPress={() => setRole('instructor')}
+                    >
+                      <Text style={[styles.roleText, role === 'instructor' && styles.roleSelectedText]}>Instructor</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.backButtonText}>Back to Home</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+
+                <TouchableOpacity
+                  style={[styles.button, loading && styles.buttonDisabled]}
+                  onPress={handleSignup}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <Text style={styles.buttonText}>Create Account</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                  <Text style={styles.backButtonText}>Back to Home</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -202,6 +234,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
+  roleSelector: {
+  marginTop: 10,
+  marginBottom: 15,
+  width: '100%',
+},
+roleLabel: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#1a365d',
+  marginBottom: 10,
+  textAlign: 'left',
+  width: '100%',
+},
+roleOptions: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  width: '100%',
+},
+roleButton: {
+  flex: 1,
+  paddingVertical: 12,
+  marginHorizontal: 5,
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 10,
+  backgroundColor: 'white',
+  alignItems: 'center',
+},
+roleSelected: {
+  backgroundColor: '#3182ce',
+  borderColor: '#3182ce',
+},
+roleText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#1a365d',
+},
+roleSelectedText: {
+  color: 'white',
+},
+
   buttonDisabled: { backgroundColor: '#a0a0a0' },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
   backButton: { paddingVertical: 10 },
