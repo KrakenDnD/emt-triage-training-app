@@ -12,8 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';  
 import { LinearGradient } from 'expo-linear-gradient';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
+import { auth, firestore } from '../firebaseConfig';
 
 
 export default function Login({ navigation }) {
@@ -22,42 +23,60 @@ export default function Login({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
+  if (!email || !password) {
+    Alert.alert('Error', 'Please fill in all fields');
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    // 🔍 Fetch user role from Firestore
+    const userRef = doc(firestore, 'users', uid);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      const role = userData.role;
+
+      Alert.alert('Success', `Logged in as ${role}`, [
+        {
+          text: 'OK',
+          onPress: () => {
+            if (role === 'student') {
+              navigation.navigate('StudentDashboard');
+            } else if (role === 'instructor') {
+              navigation.navigate('InstructorDashboard');
+            } else {
+              navigation.navigate('Home'); // fallback
+            }
+          },
+        },
+      ]);
+    } else {
+      Alert.alert('Error', 'User profile not found.');
+    }
+  } catch (error) {
+    console.error('❌ Login error:', error);
+
+    let errorMessage = 'Login failed. Please try again.';
+    if (error.code === 'auth/user-not-found') {
+      errorMessage = 'No account found with this email.';
+    } else if (error.code === 'auth/wrong-password') {
+      errorMessage = 'Incorrect password.';
+    } else if (error.code === 'auth/invalid-email') {
+      errorMessage = 'Please enter a valid email address.';
+    } else if (error.code === 'auth/too-many-requests') {
+      errorMessage = 'Too many failed attempts. Please try again later.';
     }
 
-    setLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('✅ User logged in:', userCredential.user.email);
-      
-      // Navigate to main app or dashboard
-      // You can replace this with navigation to your main app screen
-      Alert.alert('Success', 'Logged in successfully!', [
-        { text: 'OK', onPress: () => navigation.navigate('Home') }
-      ]);
-      
-    } catch (error) {
-      console.error('❌ Login error:', error);
-      
-      // Handle different error types
-      let errorMessage = 'Login failed. Please try again.';
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = 'No account found with this email.';
-      } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Please enter a valid email address.';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many failed attempts. Please try again later.';
-      }
-      
-      Alert.alert('Login Error', errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+    Alert.alert('Login Error', errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
