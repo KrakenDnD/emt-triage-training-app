@@ -1,0 +1,8 @@
+{
+  "codebase": "default",
+  "runtime": "nodejs18",
+  "entryPoint": "api",
+  "deployment": {
+    "platform": "gcfv1"
+  }
+}

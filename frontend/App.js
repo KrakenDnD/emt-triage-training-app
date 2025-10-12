@@ -1,12 +1,22 @@
-// import React from 'react';
+// ✅ Firebase setup
 import './firebaseConfig';
+
+// ✅ React Native core
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';  
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+// ✅ Expo and navigation
 import { LinearGradient } from 'expo-linear-gradient';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+
+// ✅ Network and lifecycle
 import NetInfo from '@react-native-community/netinfo';
 import { useEffect, useRef } from 'react';
+
+
+
+// ✅ Screens
 import Login from './pages/login.tsx';
 import Signup from './pages/signup.tsx';
 import StudentDash from './pages/studentdash.tsx';
@@ -15,16 +25,17 @@ import AIChatScreen from './src/screens/AIChatScreen.js';
 import Loading from './pages/loading.tsx';
 import ConnectionLost from './pages/connectionlost.tsx';
 import ReferenceLib from './pages/referencelib';
-import Glossary from './pages/glossary'
-import Review from './pages/scenarioreview'
-import ScenarioSelect from './pages/scenarioselect'
-import Conditions from './pages/conditions'
-import StudentProfile from './pages/studentprofile'
-import InstructorProfile from './pages/instructorprofile'
-
+import Glossary from './pages/glossary';
+import Review from './pages/scenarioreview';
+import ScenarioSelect from './pages/scenarioselect';
+import Conditions from './pages/conditions';
+import StudentProfile from './pages/studentprofile';
+import InstructorProfile from './pages/instructorprofile';
 
 
 const Stack = createStackNavigator();
+
+
 
 function HomeScreen({ navigation }) {
   const handleStartTraining = () => {
@@ -38,26 +49,20 @@ function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a365d" />
-      <LinearGradient
-        colors={['#1a365d', '#2c5282', '#3182ce']}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <Text style={styles.title}>EMT Triage Training</Text>
             <Text style={styles.subtitle}>AI-Powered Emergency Medical Training</Text>
           </View>
-          
+
           <View style={styles.card}>
             <Text style={styles.cardTitle}>🚑 Welcome to Your Training</Text>
             <Text style={styles.cardText}>
               Master emergency triage with interactive scenarios and AI guidance
             </Text>
-            
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={handleStartTraining}
-            >
+
+            <TouchableOpacity style={styles.button} onPress={handleStartTraining}>
               <Text style={styles.buttonText}>Start Training</Text>
             </TouchableOpacity>
 
@@ -67,7 +72,6 @@ function HomeScreen({ navigation }) {
             >
               <Text style={styles.buttonText}>🤖 Try AI Assistant</Text>
             </TouchableOpacity>
-            
           </View>
 
           <View style={styles.features}>
@@ -92,7 +96,7 @@ function HomeScreen({ navigation }) {
             <Text style={styles.teamTitle}>Development Team</Text>
             <Text style={styles.teamText}>CodeBlue Collective</Text>
             <Text style={styles.teamMembers}>
-              Meghan Lawrence • Sophia Worsham • Daniel Hall
+              Meghan Lawrence • Sophia Worsham 
             </Text>
           </View>
 
@@ -108,7 +112,7 @@ function HomeScreen({ navigation }) {
 }
 
 export default function App() {
-    const navigationRef = useRef();
+  const navigationRef = useRef();
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -117,21 +121,17 @@ export default function App() {
       }
     });
 
-    return () => unsubscribe();
-  }, []);
+  }, []); 
+    
+
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator 
-        initialRouteName="Home"
-        screenOptions={{
-          headerShown: false, 
-        }}
-      >
+      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="StudentDash" component={StudentDash} />
-        <Stack.Screen name="InstructorDash" component={InstructorDash} /> 
+        <Stack.Screen name="InstructorDash" component={InstructorDash} />
         <Stack.Screen name="AIChat" component={AIChatScreen} />
         <Stack.Screen name="Loading" component={Loading} />
         <Stack.Screen name="ConnectionLost" component={ConnectionLost} />
@@ -146,6 +146,7 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

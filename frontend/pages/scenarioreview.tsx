@@ -14,7 +14,7 @@ interface Review {
   review: string;
 }
 
-export default function scenarioReview({ navigation }) {
+export default function ScenarioReview({ navigation }) {
   const Review: Review = {
     score: '90',
     stren1: 'Vitals',
