@@ -228,6 +228,14 @@ app.post('/api/test-ai-services', async (req, res) => {
   });
 });
 
+app.get('/debug-env', (req, res) => {
+  res.json({
+    huggingfaceTokenPresent: !!process.env.HUGGINGFACE_TOKEN,
+    tokenPreview: process.env.HUGGINGFACE_TOKEN?.slice(0, 6) || 'missing'
+  });
+});
+
+
 exports.api = onRequest({
   region: 'us-central1',
   allowUnauthenticated: true
