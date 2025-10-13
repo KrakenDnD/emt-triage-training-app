@@ -146,7 +146,13 @@ export default function Login({ navigation }) {
               style={styles.backButton} 
               onPress={() => navigation.navigate('StudentProfile')}
             >
-              <Text style={styles.backButtonText}>TESTING</Text>
+              <Text style={styles.backButtonText}>STUDENT TESTING</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => navigation.navigate('InstructorProfile')}
+            >
+              <Text style={styles.backButtonText}>INSTRUCTOR TESTING</Text>
             </TouchableOpacity>
             </View>
         </View>

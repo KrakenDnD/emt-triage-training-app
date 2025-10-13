@@ -31,7 +31,7 @@ import ScenarioSelect from './pages/scenarioselect';
 import Conditions from './pages/conditions';
 import StudentProfile from './pages/studentprofile';
 import InstructorProfile from './pages/instructorprofile';
-
+import CustomizeAI from './pages/customizeAI';
 
 const Stack = createStackNavigator();
 
@@ -101,9 +101,9 @@ function HomeScreen({ navigation }) {
           </View>
 
           <View style={styles.status}>
-            <Text style={styles.statusText}>🚧 Development Status: Week 1 of 10</Text>
-            <Text style={styles.statusSubtext}>Foundation & Setup Phase</Text>
-            <Text style={styles.versionText}>Version 0.1.0</Text>
+            <Text style={styles.statusText}>🚧 Development Status: Week 4 of 10</Text>
+            <Text style={styles.statusSubtext}>Frontend Development Phase</Text>
+            <Text style={styles.versionText}>Version 0.1.4</Text>
           </View>
         </ScrollView>
       </LinearGradient>
@@ -142,6 +142,7 @@ export default function App() {
         <Stack.Screen name="Conditions" component={Conditions} />
         <Stack.Screen name="StudentProfile" component={StudentProfile} />
         <Stack.Screen name="InstructorProfile" component={InstructorProfile} />
+        <Stack.Screen name="CustomizeAI" component={CustomizeAI} />
       </Stack.Navigator>
     </NavigationContainer>
   );

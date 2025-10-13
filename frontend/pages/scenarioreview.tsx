@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TrendingUp, TrendingDown, MessageSquare, RotateCcw, ArrowRight } from 'lucide-react-native';
 
 interface Review {
   score: string;
@@ -33,9 +34,16 @@ export default function ScenarioReview({ navigation }) {
     return '#ef4444';
   };
 
+  const getScoreLabel = (score: string) => {
+    const numScore = parseInt(score);
+    if (numScore >= 85) return 'Excellent';
+    if (numScore >= 70) return 'Good';
+    return 'Needs Improvement';
+  };
+
   const handleContinue = () => {
     try {
-      navigation.navigate('ScenarioSelect'); //replace w scenario selection screen
+      navigation.navigate('ScenarioSelect');
     } catch (error) {
       console.error('Navigation error:', error);
     }
@@ -43,7 +51,7 @@ export default function ScenarioReview({ navigation }) {
 
   const handleRetry = () => {
     try {
-      navigation.navigate('Home'); //replace w scenario screen
+      navigation.navigate('Home');
     } catch (error) {
       console.error('Navigation error:', error);
     }
@@ -51,7 +59,7 @@ export default function ScenarioReview({ navigation }) {
 
   const handleExplain = () => {
     try {
-      navigation.navigate('Home'); //replace w ai screen
+      navigation.navigate('AIChatScreen'); //error
     } catch (error) {
       console.error('Navigation error:', error);
     }
@@ -59,71 +67,96 @@ export default function ScenarioReview({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#1a365d', '#2c5282', '#3182ce']}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.card}>
-            {/* Header Section */}
-            <Text style={styles.title}>Debrief</Text>
-            <View style={styles.divider} />
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Scenario Debrief</Text>
+            <Text style={styles.headerSubtitle}>Performance Review & Feedback</Text>
+          </View>
 
-            {/* Score Section */}
-            <Text style={[styles.scoreText, { color: getScoreColor(Review.score) }]}>
-              Overall Score: {Review.score}
-            </Text>
-
-            {/* Strengths/Weaknesses Table */}
-            <View style={styles.table}>
-              <View style={styles.tableHeaderRow}>
-                <View style={styles.tableHeaderCell}>
-                  <Text style={styles.tableHeaderText}>Strengths</Text>
-                </View>
-                <View style={styles.tableHeaderCell}>
-                  <Text style={styles.tableHeaderText}>Weaknesses</Text>
-                </View>
-              </View>
-
-              <View style={styles.tableDataRow}>
-                <Text style={styles.tableCellLeft}>{Review.stren1}</Text>
-                <Text style={styles.tableCellRight}>{Review.weak1}</Text>
-              </View>
-              <View style={styles.tableDataRow}>
-                <Text style={styles.tableCellLeft}>{Review.stren2}</Text>
-                <Text style={styles.tableCellRight}>{Review.weak2}</Text>
-              </View>
-              <View style={[styles.tableDataRow, styles.lastRow]}>
-                <Text style={styles.tableCellLeft}>{Review.stren3}</Text>
-                <Text style={styles.tableCellRight}>{Review.weak3}</Text>
-              </View>
+          {/* Score Card */}
+          <View style={styles.scoreCard}>
+            <Text style={styles.scoreLabel}>Overall Performance</Text>
+            <View style={styles.scoreCircle}>
+              <Text style={[styles.scoreValue, { color: getScoreColor(Review.score) }]}>
+                {Review.score}
+              </Text>
+              <Text style={styles.scoreOutOf}>/100</Text>
             </View>
+            <Text style={[styles.scoreBadge, { color: getScoreColor(Review.score) }]}>
+              {getScoreLabel(Review.score)}
+            </Text>
+          </View>
 
-            {/* AI Review Section */}
-            <View style={styles.divider} />
-            <Text style={styles.sectionTitle}>AI Review</Text>
-            <Text style={styles.reviewText}>{Review.review}</Text>
-
-            {/* Action Buttons */}
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.button} onPress={handleExplain}>
-                <Text style={styles.buttonText}>AI, explain it further</Text>
-              </TouchableOpacity>
-
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.button} onPress={handleRetry}>
-                  <Text style={styles.buttonText}>Retry</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.button} onPress={handleContinue}>
-                  <Text style={styles.buttonText}>Continue</Text>
-                </TouchableOpacity>
-              </View>
+          {/* Strengths Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <TrendingUp color="#10b981" size={24} />
+              <Text style={styles.cardTitle}>Strengths</Text>
+            </View>
+            <View style={styles.itemList}>
+              {[Review.stren1, Review.stren2, Review.stren3].map((strength, index) => (
+                <View key={index} style={styles.listItem}>
+                  <View style={[styles.bulletPoint, { backgroundColor: '#10b981' }]} />
+                  <Text style={styles.listItemText}>{strength}</Text>
+                </View>
+              ))}
             </View>
           </View>
+
+          {/* Areas for Improvement Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <TrendingDown color="#f59e0b" size={24} />
+              <Text style={styles.cardTitle}>Areas for Improvement</Text>
+            </View>
+            <View style={styles.itemList}>
+              {[Review.weak1, Review.weak2, Review.weak3].map((weakness, index) => (
+                <View key={index} style={styles.listItem}>
+                  <View style={[styles.bulletPoint, { backgroundColor: '#f59e0b' }]} />
+                  <Text style={styles.listItemText}>{weakness}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* AI Review Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <MessageSquare color="#2563eb" size={24} />
+              <Text style={styles.cardTitle}>Detailed Feedback</Text>
+            </View>
+            <Text style={styles.reviewText}>{Review.review}</Text>
+            
+            <TouchableOpacity style={styles.explainButton} onPress={handleExplain}>
+              <MessageSquare color="#2563eb" size={18} />
+              <Text style={styles.explainButtonText}>Ask AI for clarification</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.retryButton]} 
+              onPress={handleRetry}
+            >
+              <RotateCcw color="#64748b" size={20} />
+              <Text style={styles.retryButtonText}>Retry Scenario</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.continueButton]} 
+              onPress={handleContinue}
+            >
+              <Text style={styles.continueButtonText}>Continue</Text>
+              <ArrowRight color="#ffffff" size={20} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.bottomSpacer} />
         </ScrollView>
 
         <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
@@ -138,143 +171,173 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
-    paddingHorizontal: 20,
   },
   scrollContent: {
-    paddingTop: 60,
-    paddingBottom: 100,
+    padding: 20,
+    paddingTop: 20,
   },
-  card: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 20,
-    padding: 32,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  title: {
-    fontSize: 38,
-    fontWeight: '700',
-    color: '#1a365d',
-    marginBottom: 0,
-    letterSpacing: -0.5,
-  },
-  divider: {
-    width: '100%',
-    height: 3,
-    backgroundColor: '#1a365d',
-    marginVertical: 20,
-    borderRadius: 2,
-  },
-  scoreText: {
-    fontSize: 32,
-    fontWeight: '700',
+  header: {
     marginBottom: 24,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
-  table: {
-    width: '100%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    marginBottom: 8,
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: '#3182ce',
-  },
-  tableHeaderCell: {
-    flex: 1,
-    padding: 14,
-  },
-  tableHeaderText: {
-    fontSize: 16,
+  headerTitle: {
+    fontSize: 28,
     fontWeight: '700',
     color: '#ffffff',
-    textAlign: 'center',
+    marginBottom: 8,
   },
-  tableDataRow: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  lastRow: {
-    borderBottomWidth: 0,
-  },
-  tableCellLeft: {
-    flex: 1,
-    padding: 14,
-    fontSize: 15,
-    color: '#334155',
-    textAlign: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#e2e8f0',
-  },
-  tableCellRight: {
-    flex: 1,
-    padding: 14,
-    fontSize: 15,
-    color: '#334155',
-    textAlign: 'center',
-  },
-  sectionTitle: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#1a365d',
-    marginBottom: 16,
-  },
-  reviewText: {
+  headerSubtitle: {
     fontSize: 16,
-    color: '#475569',
-    lineHeight: 24,
-    textAlign: 'left',
-    width: '100%',
-    marginBottom: 24,
+    color: '#cbd5e1',
+    fontWeight: '500',
   },
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 8,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-    justifyContent: 'center',
-  },
-  button: {
-    backgroundColor: '#3182ce',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    minWidth: 140,
+  scoreCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 32,
+    marginBottom: 16,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 3,
   },
-  buttonText: {
-    color: '#ffffff',
+  scoreLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 16,
+  },
+  scoreCircle: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  scoreValue: {
+    fontSize: 64,
+    fontWeight: '700',
+    lineHeight: 64,
+  },
+  scoreOutOf: {
+    fontSize: 18,
+    color: '#94a3b8',
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  scoreBadge: {
+    fontSize: 16,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  itemList: {
+    gap: 12,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bulletPoint: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  listItemText: {
+    fontSize: 16,
+    color: '#475569',
+    fontWeight: '500',
+    flex: 1,
+  },
+  reviewText: {
+    fontSize: 15,
+    color: '#64748b',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  explainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#eff6ff',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  explainButtonText: {
     fontSize: 15,
     fontWeight: '600',
+    color: '#2563eb',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  retryButton: {
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  retryButtonText: {
+    color: '#64748b',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  continueButton: {
+    backgroundColor: '#2563eb',
+  },
+  continueButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  bottomSpacer: {
+    height: 20,
   },
   footer: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    fontSize: 13,
+    textAlign: 'center',
+    fontSize: 14,
     color: '#ffffff',
     fontWeight: '500',
-    opacity: 0.9,
+    marginBottom: 40,
   },
 });
