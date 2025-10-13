@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { CheckCircle, Clock, Users, AlertTriangle } from 'lucide-react-native';
 
 const fetchScenarios = async (userId) => {
-  await new Promise(resolve => setTimeout(resolve, 500)); // simulates network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
   
-  // const response = await fetch(`https://your-api.com/users/${userId}/scenarios`);
-  // return response.json();
-  
-  //mock data
   return [
     {
       id: '1',
@@ -56,63 +53,54 @@ const fetchScenarios = async (userId) => {
 
 const getDifficultyColor = (difficulty) => {
   const colors = {
-    easy: '#149067ff',
-    medium: '#f59f0bff',
-    hard: '#ee0d0dff',
-    extreme: '#990606ff',
+    easy: '#10b981',
+    medium: '#f59e0b',
+    hard: '#ef4444',
+    extreme: '#991b1b',
   };
-  return colors[difficulty.toLowerCase()] || 'rgba(0, 0, 0, 0.6)';
+  return colors[difficulty.toLowerCase()] || '#64748b';
 };
 
-const getDifficultyPastelColor = (difficulty) => {
-  const colors = {
-    easy: '#C8E6D5',
-    medium: '#FFE4B5',
-    hard: '#FFCCCB',
-    extreme: '#E8B4B8',
-  };
-  return colors[difficulty.toLowerCase()] || '#E0E0E0';
-};
-
-const getDifficultyDarkColor = (difficulty) => {
-  const colors = {
-    easy: '#2D5F4A',
-    medium: '#8B6914',
-    hard: '#8B2C2C',
-    extreme: '#5C1A1A',
-  };
-  return colors[difficulty.toLowerCase()] || '#4A4A4A';
+const getDifficultyIcon = (difficulty) => {
+  switch(difficulty.toLowerCase()) {
+    case 'easy':
+      return <Clock color="#10b981" size={16} />;
+    case 'medium':
+      return <Users color="#f59e0b" size={16} />;
+    case 'hard':
+    case 'extreme':
+      return <AlertTriangle color="#ef4444" size={16} />;
+    default:
+      return <Clock color="#64748b" size={16} />;
+  }
 };
 
 const ScenarioCard = ({ scenario, onPress }) => (
   <TouchableOpacity
-    style={[
-      styles.section, 
-      { backgroundColor: getDifficultyPastelColor(scenario.difficulty) }
-    ]}
+    style={styles.card}
     activeOpacity={0.7}
     onPress={onPress}
   >
-    <View style={styles.tagContainer}>
-      {scenario.isCompleted && (
-        <View style={styles.completedBadge}>
-          <Text style={styles.completedText}>✓ Completed</Text>
+    <View style={styles.cardHeader}>
+      <Text style={styles.cardTitle}>{scenario.title}</Text>
+      <View style={styles.badges}>
+        {scenario.isCompleted && (
+          <View style={styles.completedBadge}>
+            <CheckCircle color="#ffffff" size={14} />
+            <Text style={styles.completedText}>Completed</Text>
+          </View>
+        )}
+        <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(scenario.difficulty) }]}>
+          {getDifficultyIcon(scenario.difficulty)}
+          <Text style={styles.difficultyText}>{scenario.difficulty}</Text>
         </View>
-      )}
-      <View style={[styles.difficultyTag, { backgroundColor: getDifficultyColor(scenario.difficulty) }]}>
-        <Text style={styles.difficultyText}>{scenario.difficulty}</Text>
       </View>
     </View>
     
-    <View style={styles.sectionContent}>
-      <View style={styles.textContainer}>
-        <Text style={[styles.sectionTitle, { color: getDifficultyDarkColor(scenario.difficulty) }]}>
-          {scenario.title}
-        </Text>
-        <Text style={[styles.sectionDescription, { color: getDifficultyDarkColor(scenario.difficulty) }]}>
-          {scenario.description}
-        </Text>
-      </View>
+    <Text style={styles.cardDescription}>{scenario.description}</Text>
+    
+    <View style={styles.cardFooter}>
+      <Text style={styles.startText}>Start Scenario →</Text>
     </View>
   </TouchableOpacity>
 );
@@ -144,57 +132,64 @@ const ScenarioSelection = ({ navigation, route }) => {
 
   const handleScenarioPress = (scenario) => {
     try {
-      navigation.navigate('Review')//, { //REPLACE WHEN BACKEND IS FINISHED
-    //    scenarioId: scenario.id,
-    //    scenario: scenario
-    //  });
+      navigation.navigate('Review');
     } catch (error) {
       console.error('Navigation error:', error);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView>
-        <LinearGradient
-          colors={['#2B4C7E', '#4A6FA5']}
-          style={styles.header}
-        >
-          <Text style={styles.headerTitle}>Select Your</Text>
-          <Text style={styles.headerTitle}>Scenario...</Text>
-        </LinearGradient>
+    <SafeAreaView style={styles.container}>
+      <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
+        <ScrollView>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Select Your Scenario</Text>
+            <Text style={styles.headerSubtitle}>Choose a training scenario to begin</Text>
+          </View>
 
-        <View style={styles.content}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#2B4C7E" />
-              <Text style={styles.loadingText}>Loading scenarios...</Text>
-            </View>
-          ) : error ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={loadScenarios}>
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            scenarios.map((scenario) => (
-              <ScenarioCard
-                key={scenario.id}
-                scenario={scenario}
-                onPress={() => handleScenarioPress(scenario)}
-              />
-            ))
-          )}
-        </View>
+          <View style={styles.content}>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#ffffff" />
+                <Text style={styles.loadingText}>Loading scenarios...</Text>
+              </View>
+            ) : error ? (
+              <View style={styles.errorCard}>
+                <AlertTriangle color="#ef4444" size={48} />
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={loadScenarios}>
+                  <Text style={styles.retryButtonText}>Try Again</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <View style={styles.statsContainer}>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statNumber}>{scenarios.length}</Text>
+                    <Text style={styles.statLabel}>Total Scenarios</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statNumber}>
+                      {scenarios.filter(s => s.isCompleted).length}
+                    </Text>
+                    <Text style={styles.statLabel}>Completed</Text>
+                  </View>
+                </View>
 
-        <LinearGradient
-          colors={['#2B7BB9', '#3A8FCC']}
-          style={styles.footer}
-        >
-          <Text style={styles.footerText}>Developed by CodeBlue Collective</Text>
-        </LinearGradient>
-      </ScrollView>
+                {scenarios.map((scenario) => (
+                  <ScenarioCard
+                    key={scenario.id}
+                    scenario={scenario}
+                    onPress={() => handleScenarioPress(scenario)}
+                  />
+                ))}
+              </>
+            )}
+          </View>
+
+          <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
+        </ScrollView>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -202,131 +197,169 @@ const ScenarioSelection = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+  },
+  gradient: {
+    flex: 1,
   },
   header: {
-    paddingVertical: 30,
+    paddingTop: 20,
+    paddingBottom: 24,
     paddingHorizontal: 20,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginTop: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 42,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  section: {
-    position: 'relative',
-    overflow: 'visible',
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 12,
-  },
-  sectionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  textContainer: {
-    flex: 1,
-    marginRight: 12,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2B4C7E',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
     marginBottom: 8,
   },
-  sectionDescription: {
-    fontSize: 14,
-    color: '#1F3A5F',
-    lineHeight: 20,
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#cbd5e1',
+    fontWeight: '500',
   },
-  tagContainer: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
+  content: {
+    padding: 20,
+  },
+  statsContainer: {
     flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    gap: 8,
-    zIndex: 10,
   },
-  difficultyTag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    elevation: 5,
-  },
-  difficultyText: {
+  statNumber: {
+    fontSize: 32,
+    fontWeight: '700',
     color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#cbd5e1',
+    fontWeight: '500',
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardHeader: {
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 12,
+  },
+  badges: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   completedBadge: {
-    backgroundColor: '#149067ff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#10b981',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 6,
-    elevation: 5,
+    borderRadius: 8,
   },
   completedText: {
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '600',
   },
+  difficultyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  difficultyText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  cardDescription: {
+    fontSize: 15,
+    color: '#64748b',
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  startText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2563eb',
+  },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: 16,
     fontSize: 16,
-    color: '#2B4C7E',
+    color: '#ffffff',
+    fontWeight: '500',
   },
-  errorContainer: {
+  errorCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 32,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   errorText: {
     fontSize: 16,
-    color: '#ee0d0dff',
-    marginBottom: 16,
+    color: '#64748b',
+    marginTop: 16,
+    marginBottom: 24,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#2B4C7E',
+    backgroundColor: '#2563eb',
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
   footer: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 32,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '500',
+    marginTop: 32,
+    marginBottom: 40,
   },
 });
 

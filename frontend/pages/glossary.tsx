@@ -9,7 +9,7 @@ export default function Glossary() {
   const navigation = useNavigation<any>();
   const handleBackPress = () => {
   try {
-    navigation.navigate('ReferenceLib');
+    navigation.goBack();
   } catch (error) {
     console.error('Navigation error:', error);
   }

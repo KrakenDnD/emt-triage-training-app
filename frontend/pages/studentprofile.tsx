@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-//import type { ProfileDto, UpdateProfileDto } from "@/types/api"
+import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X } from 'lucide-react-native';
 
 interface ProfileDto {
   id?: string;
@@ -10,17 +10,23 @@ interface ProfileDto {
   lastName?: string;
   avatarUrl?: string;
   email?: string;
+  phoneNumber?: string;
+  allergies?: string;
+  medicalConditions?: string;
+  emergencyContact?: string;
+  instructor?: string;
+  classNumber?: string;
 }
 
 interface UpdateProfileDto {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string;
+  phoneNumber?: string;
+  allergies?: string;
+  medicalConditions?: string;
+  emergencyContact?: string;
 }
-
-// ============================================================================
-// API SERVICE (Move to separate file: services/profileService.ts)
-// ============================================================================
 
 class ProfileService {
   private baseUrl: string;
@@ -30,24 +36,19 @@ class ProfileService {
   }
 
   async getMyProfile(): Promise<ProfileDto> {
-    // TODO: Replace with actual API call
-    // const response = await fetch(`${this.baseUrl}/profile/me`, {
-    //   method: 'GET',
-    //   headers: {
-    //     'Authorization': `Bearer ${await getAuthToken()}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    // });
-    // if (!response.ok) throw new Error('Failed to fetch profile');
-    // return await response.json();
-    
-    // Dummy data for now
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
           id: '1',
           firstName: 'Hatsune',
           lastName: 'Miku',
+          email: 'hatsune.miku@example.edu',
+          phoneNumber: '(555) 123-4567',
+          allergies: 'Penicillin, Latex',
+          medicalConditions: 'None',
+          emergencyContact: 'Jane Doe - (555) 987-6543',
+          instructor: 'Professor Patel',
+          classNumber: '3',
           avatarUrl: undefined,
         });
       }, 500);
@@ -55,23 +56,13 @@ class ProfileService {
   }
 
   async updateMyProfile(data: UpdateProfileDto): Promise<ProfileDto> {
-    // TODO: Replace with actual API call
-    // const response = await fetch(`${this.baseUrl}/profile/me`, {
-    //   method: 'PATCH',
-    //   headers: {
-    //     'Authorization': `Bearer ${await getAuthToken()}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(data),
-    // });
-    // if (!response.ok) throw new Error('Failed to update profile');
-    // return await response.json();
-    
-    // Dummy response for now
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
           id: '1',
+          instructor: 'Professor Patel',
+          classNumber: '3',
+          email: 'hatsune.miku@example.edu',
           ...data,
         });
       }, 500);
@@ -79,26 +70,6 @@ class ProfileService {
   }
 
   async uploadAvatar(imageUri: string): Promise<string> {
-    // TODO: Replace with actual upload logic
-    // const formData = new FormData();
-    // formData.append('avatar', {
-    //   uri: imageUri,
-    //   type: 'image/jpeg',
-    //   name: 'avatar.jpg',
-    // } as any);
-    // 
-    // const response = await fetch(`${this.baseUrl}/profile/avatar`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${await getAuthToken()}`,
-    //   },
-    //   body: formData,
-    // });
-    // if (!response.ok) throw new Error('Failed to upload avatar');
-    // const data = await response.json();
-    // return data.avatarUrl;
-    
-    // Return local URI for now
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve(imageUri);
@@ -110,29 +81,30 @@ class ProfileService {
 const profileService = new ProfileService();
 
 export default function StudentProfile({ navigation }) {
-  const [profile, setProfile] = useState<ProfileDto>({
-    firstName: 'Hatsune',
-    lastName: 'Miku',
+  const [profile, setProfile] = useState<ProfileDto>({});
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    allergies: '',
+    medicalConditions: '',
+    emergencyContact: '',
   });
-  const [firstName, setFirstName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
 
-    const handleButtonPress = (route) => {
-  try {
-    navigation.navigate(route);
-  } catch (error) {
-    console.error('Navigation error:', error);
-  }
-};
+  const handleButtonPress = (route) => {
+    try {
+      navigation.navigate(route);
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
 
-  // Default avatar
   const defaultAvatar = require('../assets/metalmario.png');
   
   useEffect(() => {
@@ -146,38 +118,24 @@ export default function StudentProfile({ navigation }) {
     try {
       const data = await profileService.getMyProfile();
       setProfile(data);
-      setFirstName(data.firstName || '');
-      setLastName(data.lastName || '');
+      setFormData({
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        phoneNumber: data.phoneNumber || '',
+        allergies: data.allergies || '',
+        medicalConditions: data.medicalConditions || '',
+        emergencyContact: data.emergencyContact || '',
+      });
     } catch (err) {
       console.error('Failed to load profile:', err);
       setError('Failed to load profile. Using default values.');
-      // Keep dummy data on error
     } finally {
       setIsLoading(false);
     }
   };
 
-  const uploadAvatar = async (imageUri: string) => {
-    try {
-      setIsSaving(true);
-      const avatarUrl = await profileService.uploadAvatar(imageUri);
-      
-      // Update profile with new avatar URL
-      const updatedProfile = await profileService.updateMyProfile({ avatarUrl });
-      setProfile(updatedProfile);
-      
-      Alert.alert('Success', 'Avatar updated successfully!');
-    } catch (err) {
-      console.error('Failed to upload avatar:', err);
-      Alert.alert('Error', 'Failed to upload avatar. Please try again.');
-      setLocalAvatarUri(null); 
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const saveProfile = async () => {
-    if (!firstName.trim() || !lastName.trim()) {
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
       Alert.alert('Validation Error', 'First name and last name are required.');
       return;
     }
@@ -187,15 +145,25 @@ export default function StudentProfile({ navigation }) {
 
     try {
       const updateData: UpdateProfileDto = {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
+        allergies: formData.allergies.trim(),
+        medicalConditions: formData.medicalConditions.trim(),
+        emergencyContact: formData.emergencyContact.trim(),
       };
 
       const updatedProfile = await profileService.updateMyProfile(updateData);
       
       setProfile(updatedProfile);
-      setFirstName(updatedProfile.firstName || '');
-      setLastName(updatedProfile.lastName || '');
+      setFormData({
+        firstName: updatedProfile.firstName || '',
+        lastName: updatedProfile.lastName || '',
+        phoneNumber: updatedProfile.phoneNumber || '',
+        allergies: updatedProfile.allergies || '',
+        medicalConditions: updatedProfile.medicalConditions || '',
+        emergencyContact: updatedProfile.emergencyContact || '',
+      });
       setIsEditingProfile(false);
       
       Alert.alert('Success', 'Profile updated successfully!');
@@ -209,8 +177,14 @@ export default function StudentProfile({ navigation }) {
   };
 
   const cancelEdit = () => {
-    setFirstName(profile.firstName || '');
-    setLastName(profile.lastName || '');
+    setFormData({
+      firstName: profile.firstName || '',
+      lastName: profile.lastName || '',
+      phoneNumber: profile.phoneNumber || '',
+      allergies: profile.allergies || '',
+      medicalConditions: profile.medicalConditions || '',
+      emergencyContact: profile.emergencyContact || '',
+    });
     setIsEditingProfile(false);
   };
 
@@ -223,8 +197,6 @@ export default function StudentProfile({ navigation }) {
     }
     return defaultAvatar;
   };
-
-
 
   if (isLoading) {
     return (
@@ -242,139 +214,291 @@ export default function StudentProfile({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
+        <ScrollView>
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+              {!isEditingProfile && (
+                <TouchableOpacity 
+                  onPress={() => setIsEditingProfile(true)}
+                  style={styles.editIconButton}
+                >
+                  <Edit3 color="#ffffff" size={20} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
         {error && (
           <View style={styles.errorBanner}>
+            <AlertCircle color="#dc2626" size={20} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
-        <View style={styles.card}>
-          {/* Three Dots Menu */}
-          <View style={styles.menuContainer}>
-            <TouchableOpacity 
-              onPress={() => setDropdownVisible(!dropdownVisible)}
-              style={styles.menuButton}
-            >
-              <Text style={styles.menuDots}>⋮</Text>
-            </TouchableOpacity>
-            
-            {dropdownVisible && (
-              <View style={styles.dropdown}>
-                <TouchableOpacity
-                  style={styles.dropdownItem}
-                  onPress={() => {
-                    setIsEditingProfile(true);
-                    setDropdownVisible(false);
-                  }}
-                >
-                  <Text style={styles.dropdownText}>Edit Profile</Text>
-                </TouchableOpacity>
+        <View style={styles.content}>
+          {/* Profile Card */}
+          <View style={styles.profileCard}>
+            <View style={styles.avatarSection}>
+              <View style={styles.avatarContainer}>
+                <Image source={getAvatarSource()} style={styles.avatar} />
+                {isSaving && (
+                  <View style={styles.avatarOverlay}>
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-
-          {/* Profile Content */}
-          <View style={styles.profileContent}>
-            <View style={styles.avatarContainer}>
-              <Image source={getAvatarSource()} style={styles.avatar} />
-              {isSaving && (
-                <View style={styles.avatarOverlay}>
-                  <ActivityIndicator size="small" color="#ffffff" />
-                </View>
-              )}
-            </View>
-
-            {/* Identifying Info */}
-            <View style={styles.nameSection}>
-              {isEditingProfile ? (
-                <View style={styles.nameContainer}>
-                  <TextInput
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    placeholder="First name"
-                    placeholderTextColor="#666"
-                    style={styles.nameInput}
-                    returnKeyType="next"
-                    editable={!isSaving}
-                  />
-                  <TextInput
-                    value={lastName}
-                    onChangeText={setLastName}
-                    placeholder="Last name"
-                    placeholderTextColor="#666"
-                    style={styles.nameInput}
-                    returnKeyType="done"
-                    editable={!isSaving}
-                  />
-                </View>
-              ) : (
+              <View style={styles.nameSection}>
                 <Text style={styles.nameText}>
-                  {firstName || 'First'} {lastName || 'Last'}
+                  {formData.firstName || 'First'} {formData.lastName || 'Last'}
                 </Text>
+                <View style={styles.roleContainer}>
+                  <GraduationCap color="#64748b" size={16} />
+                  <Text style={styles.roleText}>EMT Student</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Read-only Information */}
+            <View style={styles.infoSection}>
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconContainer}>
+                  <GraduationCap color="#2563eb" size={18} />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Instructor</Text>
+                  <Text style={styles.infoValue}>{profile.instructor || 'Not assigned'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconContainer}>
+                  <Hash color="#2563eb" size={18} />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Class Number</Text>
+                  <Text style={styles.infoValue}>{profile.classNumber || 'Not assigned'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconContainer}>
+                  <Mail color="#2563eb" size={18} />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Email</Text>
+                  <Text style={styles.infoValue}>{profile.email || 'Not provided'}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Editable Information Card */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Personal Information</Text>
+            
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>First Name *</Text>
+              {isEditingProfile ? (
+                <TextInput
+                  value={formData.firstName}
+                  onChangeText={(text) => setFormData({...formData, firstName: text})}
+                  placeholder="Enter first name"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.input}
+                  editable={!isSaving}
+                />
+              ) : (
+                <Text style={styles.fieldValue}>{formData.firstName || 'Not provided'}</Text>
+              )}
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Last Name *</Text>
+              {isEditingProfile ? (
+                <TextInput
+                  value={formData.lastName}
+                  onChangeText={(text) => setFormData({...formData, lastName: text})}
+                  placeholder="Enter last name"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.input}
+                  editable={!isSaving}
+                />
+              ) : (
+                <Text style={styles.fieldValue}>{formData.lastName || 'Not provided'}</Text>
+              )}
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Phone Number</Text>
+              {isEditingProfile ? (
+                <TextInput
+                  value={formData.phoneNumber}
+                  onChangeText={(text) => setFormData({...formData, phoneNumber: text})}
+                  placeholder="(555) 123-4567"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                  editable={!isSaving}
+                />
+              ) : (
+                <Text style={styles.fieldValue}>{formData.phoneNumber || 'Not provided'}</Text>
               )}
             </View>
           </View>
 
-          {/* Profile Editing Buttons */}
+          {/* Medical Information Card */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Medical Information</Text>
+            
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Known Allergies</Text>
+              {isEditingProfile ? (
+                <TextInput
+                  value={formData.allergies}
+                  onChangeText={(text) => setFormData({...formData, allergies: text})}
+                  placeholder="e.g., Penicillin, Latex"
+                  placeholderTextColor="#94a3b8"
+                  style={[styles.input, styles.textArea]}
+                  multiline
+                  numberOfLines={2}
+                  editable={!isSaving}
+                />
+              ) : (
+                <Text style={styles.fieldValue}>{formData.allergies || 'None reported'}</Text>
+              )}
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Medical Conditions</Text>
+              {isEditingProfile ? (
+                <TextInput
+                  value={formData.medicalConditions}
+                  onChangeText={(text) => setFormData({...formData, medicalConditions: text})}
+                  placeholder="e.g., Asthma, Diabetes"
+                  placeholderTextColor="#94a3b8"
+                  style={[styles.input, styles.textArea]}
+                  multiline
+                  numberOfLines={2}
+                  editable={!isSaving}
+                />
+              ) : (
+                <Text style={styles.fieldValue}>{formData.medicalConditions || 'None reported'}</Text>
+              )}
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Emergency Contact</Text>
+              {isEditingProfile ? (
+                <TextInput
+                  value={formData.emergencyContact}
+                  onChangeText={(text) => setFormData({...formData, emergencyContact: text})}
+                  placeholder="Name - (555) 123-4567"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.input}
+                  editable={!isSaving}
+                />
+              ) : (
+                <Text style={styles.fieldValue}>{formData.emergencyContact || 'Not provided'}</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Action Buttons */}
           {isEditingProfile && (
-            <View style={styles.buttonContainer}>
+            <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
+                style={[styles.actionButton, styles.cancelButton]}
                 onPress={cancelEdit}
                 disabled={isSaving}
               >
+                <X color="#64748b" size={20} />
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, styles.saveButton, isSaving && styles.buttonDisabled]}
+                style={[styles.actionButton, styles.saveButton, isSaving && styles.buttonDisabled]}
                 onPress={saveProfile}
                 disabled={isSaving}
               >
                 {isSaving ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={styles.buttonText}>Save</Text>
+                  <>
+                    <Check color="#ffffff" size={20} />
+                    <Text style={styles.saveButtonText}>Save Changes</Text>
+                  </>
                 )}
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Navigation Buttons */}
-          <TouchableOpacity 
-            style={styles.mainButton}
-            onPress={() => handleButtonPress('ScenarioSelect')}
-          >
-            <Text style={styles.mainButtonText}>Scenario Selection</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.mainButton}
-            onPress={() => handleButtonPress('AIChat')} 
-          >
-            <Text style={styles.mainButtonText}>Ask EMTelligence A Question</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.mainButton}
-            onPress={() => handleButtonPress('ReferenceLib')}
-          >
-            <Text style={styles.mainButtonText}>Reference Library</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.mainButton}
-        //    onPress={() => handleButtonPress('Analytics')}
-          >
-            <Text style={styles.mainButtonText}>Analytics</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.mainButton}
-        //    onPress={() => handleButtonPress('History')}
-          >
-            <Text style={styles.mainButtonText}>History</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Navigation Section */}
+          <View style={styles.navigationSection}>
+            <Text style={styles.navigationTitle}>Quick Actions</Text>
+            
+            <TouchableOpacity 
+              style={styles.navButton}
+              onPress={() => handleButtonPress('ScenarioSelect')}
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>Scenario Selection</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
 
-        <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
-      </LinearGradient>
-    </SafeAreaView>
+            <TouchableOpacity 
+              style={styles.navButton}
+              onPress={() => handleButtonPress('CustomizeAI')}
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>Customize EMTelligence</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navButton}
+              onPress={() => handleButtonPress('AIChat')} 
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>Ask EMTelligence A Question</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navButton}
+              onPress={() => handleButtonPress('ReferenceLib')}
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>Reference Library</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navButton}
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>Analytics</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navButton}
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>History</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
+        </View>
+      </ScrollView>
+    </LinearGradient>
+  </SafeAreaView>
   );
 }
 
@@ -384,9 +508,6 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 160,
-    paddingBottom: 40,
   },
   loadingContainer: {
     flex: 1,
@@ -394,84 +515,79 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: 16,
     fontSize: 16,
     color: '#ffffff',
-  },
-  errorBanner: {
-    backgroundColor: 'rgba(220, 38, 38, 0.9)',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#ffffff',
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  card: {
-    backgroundColor: '#d9dfe6',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    position: 'relative',
-  },
-  menuContainer: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 10,
-  },
-  menuButton: {
-    padding: 8,
-  },
-  menuDots: {
-    fontSize: 24,
-    color: '#1a365d',
-    fontWeight: 'bold',
-  },
-  dropdown: {
-    position: 'absolute',
-    top: 40,
-    right: 0,
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-    minWidth: 150,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 0,
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: '#1a365d',
     fontWeight: '500',
   },
-  profileContent: {
+  header: {
+    paddingTop: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  editIconButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
+    backgroundColor: '#fee2e2',
+    padding: 16,
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 12,
+    gap: 12,
+  },
+  errorText: {
+    flex: 1,
+    color: '#dc2626',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  content: {
+    padding: 20,
+  },
+  profileCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  avatarSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
   avatarContainer: {
     position: 'relative',
-    marginRight: 20,
+    marginRight: 16,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 3,
-    borderColor: '#1a365d',
+    borderColor: '#2563eb',
   },
   avatarOverlay: {
     position: 'absolute',
@@ -479,7 +595,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 50,
+    borderRadius: 40,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -487,80 +603,172 @@ const styles = StyleSheet.create({
   nameSection: {
     flex: 1,
   },
-  nameContainer: {
-    width: '100%',
-    gap: 12,
-  },
-  nameInput: {
-    width: '100%',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.16)',
-    backgroundColor: '#fff',
-    fontSize: 16,
-    color: '#1a365d',
-  },
   nameText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1a365d',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 4,
   },
-  buttonContainer: {
+  roleContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-    width: '100%',
+    alignItems: 'center',
+    gap: 6,
   },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+  roleText: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  infoSection: {
+    gap: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  infoIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  editButton: {
-    backgroundColor: '#1a365d',
+  infoContent: {
+    flex: 1,
   },
-  saveButton: {
-    backgroundColor: '#1a365d',
+  infoLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: '#0f172a',
+    fontWeight: '600',
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 20,
+  },
+  fieldGroup: {
+    marginBottom: 20,
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 16,
+    color: '#0f172a',
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  fieldValue: {
+    fontSize: 16,
+    color: '#0f172a',
+    paddingVertical: 8,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
   },
   cancelButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#f1f5f9',
     borderWidth: 1,
-    borderColor: '#1a365d',
+    borderColor: '#cbd5e1',
+  },
+  saveButton: {
+    backgroundColor: '#2563eb',
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   cancelButtonText: {
-    color: '#1a365d',
+    color: '#64748b',
     fontSize: 16,
     fontWeight: '600',
   },
-  mainButton: {
-    backgroundColor: '#1a365dcf',
-    paddingVertical: 16,
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  navigationSection: {
+    marginTop: 8,
+  },
+  navigationTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffffff',
+    marginBottom: 16,
+  },
+  navButton: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 18,
     marginBottom: 12,
-    borderRadius: 8,
-    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  navButtonContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  mainButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
+  navButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  navButtonArrow: {
+    fontSize: 20,
+    color: '#2563eb',
     fontWeight: '600',
   },
   footer: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
+    textAlign: 'center',
     fontSize: 14,
     color: '#ffffff',
     fontWeight: '500',
+    marginTop: 32,
+    marginBottom: 40,
   },
 });

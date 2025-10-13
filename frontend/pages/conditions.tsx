@@ -1,12 +1,33 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, TextInput } from 'react-native';
-import medicalData from '../assets/medicalconditions.json'; 
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, TextInput, ActivityIndicator } from 'react-native';
 
-export default function MedicalConditions({ navigation }) {
+export default function MedicalConditions({ navigation, route }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedItems, setExpandedItems] = useState({});
+  const [conditionData, setConditionData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const conditionData = medicalData;
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        //check if data was passed from navigation
+        if (route?.params?.preloadedData) {
+          setConditionData(route.params.preloadedData);
+          setIsLoading(false);
+        } else {
+          //load data for the first time
+          const data = require('../assets/medicalconditions.json');
+          setConditionData(data);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error loading medical data:', error);
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [route?.params?.preloadedData]);
 
   const toggleExpand = (index) => {
     setExpandedItems(prev => ({
@@ -17,15 +38,28 @@ export default function MedicalConditions({ navigation }) {
 
   const handleBack = () => {
     try {
-    navigation.goBack();
-  } catch (error) {
-    console.error('Navigation error:', error);
-  }
+      navigation.goBack();
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   }
 
   const openLink = (url) => {
     Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
   };
+
+  if (isLoading || !conditionData) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.gradient}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#ffffff" />
+            <Text style={styles.loadingText}>Loading medical database...</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   const filteredData = conditionData.filter(item => {
     const query = searchQuery.toLowerCase();
@@ -168,6 +202,17 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
     backgroundColor: '#2c5282',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '500',
   },
   backButton: {
     alignSelf: 'flex-start',
