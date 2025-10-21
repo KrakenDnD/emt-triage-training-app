@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GraduationCap, Users, BookOpen, Send } from 'lucide-react-native';
 
-export default function InstructorProfile() {
+export default function InstructorProfile({ navigation }) {
   const [selectedClass, setSelectedClass] = useState('Class #1');
   const [homeworkText, setHomeworkText] = useState('');
 
@@ -93,6 +93,14 @@ export default function InstructorProfile() {
       alert('Please Enter Homework');
     }
   };
+  
+ const handleButtonPress = (route) => {
+    try {
+      navigation.navigate(route);
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+ }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -234,7 +242,32 @@ export default function InstructorProfile() {
                 <Text style={styles.saveButtonText}>Save & Send to Class</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          
+        {/* Navigation Section */}
+          <View style={styles.navigationSection}>
+            <Text style={styles.navigationTitle}>Quick Actions</Text>
+            
+            <TouchableOpacity 
+              style={styles.navButton}
+              onPress={() => handleButtonPress('ScenarioSelect')}
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>Edit Class Roster</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navButton}
+              onPress={() => handleButtonPress('CustomizeAI')}
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>Create Custom Scenarios</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+            </View>
+            </View>
 
           <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
         </ScrollView>
@@ -249,6 +282,41 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  navigationSection: {
+    marginTop: 8,
+  },
+  navigationTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffffff',
+    marginBottom: 16,
+  },
+  navButton: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  navButtonContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  navButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  navButtonArrow: {
+    fontSize: 20,
+    color: '#2563eb',
+    fontWeight: '600',
   },
   header: {
     paddingTop: 20,
