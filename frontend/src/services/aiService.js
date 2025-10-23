@@ -1,14 +1,12 @@
-const BASE_URL = 'https://us-central1-emt-triage-training-app.cloudfunctions.net/api';
-
-
+const BASE_URL = 'https://us-central1-emt-triage-training-app.cloudfunctions.net';
 
 class AIService {
-  async processMessage(message, conversationHistory = []) {
+  async processMessage(message, conversationHistory = [], userId = 'unknown', scenarioId = 'general') {
     try {
-      const response = await fetch(`${BASE_URL}/process-ai-chat`, {
+      const response = await fetch(`${BASE_URL}/aiRespond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, conversationHistory })
+        body: JSON.stringify({ prompt: message, userId, scenarioId })
       });
 
       const text = await response.text();
@@ -21,67 +19,48 @@ class AIService {
         console.error('❌ JSON Parse Error:', parseError);
         return {
           success: false,
-          response: null,
-          metadata: null,
+          response: 'AI is unavailable. Please refer to protocol guidance.',
+          metadata: { source: 'fallback' },
           error: 'Invalid JSON response from backend'
         };
       }
 
       console.log('✅ Parsed AI Response:', result);
 
+      // Fallback if response is empty or missing
+      if (!result.response || result.response.trim() === '') {
+        console.warn('⚠️ Empty AI response — using fallback');
+        return {
+          success: false,
+          response: 'AI is temporarily unavailable. Please refer to protocol guidance.',
+          metadata: { source: 'fallback' },
+          error: 'Empty response from AI'
+        };
+      }
+
       return {
         success: true,
         response: result.response,
-        metadata: result.metadata
+        metadata: result.metadata || { source: 'openai' }
       };
     } catch (error) {
       console.error('❌ AI Service Error:', error);
       return {
         success: false,
-        response: null,
-        metadata: null,
+        response: 'AI is unavailable. Please refer to protocol guidance.',
+        metadata: { source: 'fallback' },
         error: error.message
       };
     }
   }
 
   async testServices() {
-    try {
-      const response = await fetch(`${BASE_URL}/test-ai-services`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      const text = await response.text();
-      console.log('🧪 Raw test response:', text);
-
-      let result;
-      try {
-        result = JSON.parse(text);
-      } catch (parseError) {
-        console.error('❌ Test JSON Parse Error:', parseError);
-        return {
-          success: false,
-          services: null,
-          error: 'Invalid JSON response from test endpoint'
-        };
-      }
-
-      console.log('🧪 Parsed Test Results:', result);
-
-      return {
-        success: true,
-        services: result.services,
-        timestamp: result.timestamp
-      };
-    } catch (error) {
-      console.error('❌ AI Test Error:', error);
-      return {
-        success: false,
-        services: null,
-        error: error.message
-      };
-    }
+    // Optional: you can remove this if you're no longer using Hugging Face
+    return {
+      success: false,
+      services: null,
+      error: 'Test endpoint not supported with OpenAI backend'
+    };
   }
 }
 

@@ -20,9 +20,11 @@ const AIChatScreen = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
+  const [userId, setUserId] = useState(null);
   const scrollViewRef = useRef(null);
 
-  // Welcome message
+  const scenarioId = 'general'; // You can make this dynamic later
+
   useEffect(() => {
     setMessages([{
       id: 1,
@@ -33,10 +35,11 @@ const AIChatScreen = () => {
     }]);
   }, []);
 
-  // Auth listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
+      if (user) {
+        setUserId(user.uid);
+      } else {
         Alert.alert('Session expired', 'Please log in again.');
         // navigation.navigate('Login'); // Uncomment if using navigation
       }
@@ -63,7 +66,7 @@ const AIChatScreen = () => {
     setLoading(true);
 
     try {
-      const result = await AIService.processMessage(currentInput, conversationHistory);
+      const result = await AIService.processMessage(currentInput, conversationHistory, userId, scenarioId);
 
       if (result.success) {
         const botMessage = {

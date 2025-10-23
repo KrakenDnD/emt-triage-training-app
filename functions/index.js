@@ -5,6 +5,9 @@ const cors = require('cors');
 const { HfInference } = require('@huggingface/inference');
 const hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
 const app = express();
+const { aiRespond } = require('./aiRespond');
+exports.aiRespond = aiRespond;
+
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
