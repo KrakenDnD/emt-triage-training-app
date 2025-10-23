@@ -46,9 +46,9 @@ export default function Login({ navigation }) {
           text: 'OK',
           onPress: () => {
             if (role === 'student') {
-              navigation.navigate('StudentDashboard');
+              navigation.navigate('StudentProfile');
             } else if (role === 'instructor') {
-              navigation.navigate('InstructorDashboard');
+              navigation.navigate('InstructorProfile');
             } else {
               navigation.navigate('Home'); // fallback
             }
@@ -142,19 +142,7 @@ export default function Login({ navigation }) {
             >
               <Text style={styles.backButtonText}>Back to Home</Text>
             </TouchableOpacity>
-          <TouchableOpacity 
-              style={styles.backButton} 
-              onPress={() => navigation.navigate('StudentProfile')}
-            >
-              <Text style={styles.backButtonText}>STUDENT TESTING</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.backButton} 
-              onPress={() => navigation.navigate('InstructorProfile')}
-            >
-              <Text style={styles.backButtonText}>INSTRUCTOR TESTING</Text>
-            </TouchableOpacity>
-            </View>
+          </View>
         </View>
       </LinearGradient>
     </SafeAreaView>
