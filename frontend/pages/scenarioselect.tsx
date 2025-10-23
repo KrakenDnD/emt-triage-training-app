@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle, Clock, Users, AlertTriangle } from 'lucide-react-native';
@@ -130,6 +130,15 @@ const ScenarioSelection = ({ navigation, route }) => {
     }
   };
 
+  const handleContinue = () => {
+    try {
+      Alert.alert("Unable to find scenario to continue")
+      //navigation.navigate('Review');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
   const handleScenarioPress = (scenario) => {
     try {
       navigation.navigate('Review');
@@ -163,6 +172,11 @@ const ScenarioSelection = ({ navigation, route }) => {
               </View>
             ) : (
               <>
+              <TouchableOpacity 
+                style={styles.continueButton}
+                onPress={handleContinue}
+                ><Text style={styles.continueText}>Continue Previous Scenario</Text>
+                </TouchableOpacity>
                 <View style={styles.statsContainer}>
                   <View style={styles.statCard}>
                     <Text style={styles.statNumber}>{scenarios.length}</Text>
@@ -219,6 +233,23 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  continueButton: {
+    marginBottom: 15,
+    backgroundColor: '#10b981',
+    padding: 20,
+    borderRadius: 16,    
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3, 
+  },
+  continueText: {
+    fontSize: 23,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginLeft: 27,
   },
   statsContainer: {
     flexDirection: 'row',

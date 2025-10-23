@@ -19,8 +19,6 @@ import { useEffect, useRef } from 'react';
 // ✅ Screens
 import Login from './pages/login.tsx';
 import Signup from './pages/signup.tsx';
-import StudentDash from './pages/studentdash.tsx';
-import InstructorDash from './pages/instructordash.tsx';
 import AIChatScreen from './src/screens/AIChatScreen.js';
 import Loading from './pages/loading.tsx';
 import ConnectionLost from './pages/connectionlost.tsx';
@@ -32,6 +30,7 @@ import Conditions from './pages/conditions';
 import StudentProfile from './pages/studentprofile';
 import InstructorProfile from './pages/instructorprofile';
 import CustomizeAI from './pages/customizeAI';
+import History from './pages/history';
 
 const Stack = createStackNavigator();
 
@@ -130,8 +129,6 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
-        <Stack.Screen name="StudentDash" component={StudentDash} />
-        <Stack.Screen name="InstructorDash" component={InstructorDash} />
         <Stack.Screen name="AIChat" component={AIChatScreen} />
         <Stack.Screen name="Loading" component={Loading} />
         <Stack.Screen name="ConnectionLost" component={ConnectionLost} />
@@ -143,6 +140,7 @@ export default function App() {
         <Stack.Screen name="StudentProfile" component={StudentProfile} />
         <Stack.Screen name="InstructorProfile" component={InstructorProfile} />
         <Stack.Screen name="CustomizeAI" component={CustomizeAI} />
+        <Stack.Screen name="History" component={History} />
       </Stack.Navigator>
     </NavigationContainer>
   );

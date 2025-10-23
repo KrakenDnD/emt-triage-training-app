@@ -477,6 +477,7 @@ export default function StudentProfile({ navigation }) {
 
             <TouchableOpacity 
               style={styles.navButton}
+              //onPress={() => handleButtonPress('Analytics')}
             >
               <View style={styles.navButtonContent}>
                 <Text style={styles.navButtonText}>Analytics</Text>
@@ -486,6 +487,7 @@ export default function StudentProfile({ navigation }) {
 
             <TouchableOpacity 
               style={styles.navButton}
+              onPress={() => handleButtonPress('History')}
             >
               <View style={styles.navButtonContent}>
                 <Text style={styles.navButtonText}>History</Text>
