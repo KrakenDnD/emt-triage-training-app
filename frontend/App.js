@@ -32,6 +32,7 @@ import InstructorProfile from './pages/instructorprofile';
 import CustomizeAI from './pages/customizeAI';
 import History from './pages/history';
 
+
 const Stack = createStackNavigator();
 
 
@@ -129,7 +130,6 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
-        <Stack.Screen name="AIChat" component={AIChatScreen} />
         <Stack.Screen name="Loading" component={Loading} />
         <Stack.Screen name="ConnectionLost" component={ConnectionLost} />
         <Stack.Screen name="ReferenceLib" component={ReferenceLib} />
@@ -141,6 +141,8 @@ export default function App() {
         <Stack.Screen name="InstructorProfile" component={InstructorProfile} />
         <Stack.Screen name="CustomizeAI" component={CustomizeAI} />
         <Stack.Screen name="History" component={History} />
+        <Stack.Screen name="AIChatScreen" component={AIChatScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
