@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, TrendingDown, MessageSquare, RotateCcw, ArrowRight } from 'lucide-react-native';
 
+
 interface Review {
   score: string;
   stren1: string;
