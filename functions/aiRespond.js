@@ -11,18 +11,22 @@ const db = admin.firestore();
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
 exports.aiRespond = functions.https.onRequest(async (req, res) => {
-  const { userId, scenarioId, prompt } = req.body;
+  const { userId, scenarioId, prompt, conversationHistory } = req.body;
 
   if (!prompt || !userId || !scenarioId) {
     return res.status(400).json({ error: 'Missing required fields.' });
   }
+
+  const messages = Array.isArray(conversationHistory) && conversationHistory.length > 0
+    ? conversationHistory
+    : [{ role: 'user', content: prompt }];
 
   try {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
         model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
+        messages: messages,
         temperature: 0.7,
       },
       {
@@ -47,6 +51,14 @@ exports.aiRespond = functions.https.onRequest(async (req, res) => {
       model: 'gpt-3.5-turbo',
       source: fallbackUsed ? 'fallback' : 'openai',
       status: fallbackUsed ? 'error' : 'success',
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await db.collection('clarificationRequests').add({
+      userId,
+      scenarioId,
+      prompt,
+      response: finalResponse,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 

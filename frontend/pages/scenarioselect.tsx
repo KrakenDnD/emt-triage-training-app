@@ -1,17 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle, Clock, Users, AlertTriangle } from 'lucide-react-native';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getAuth } from 'firebase/auth';
+
 
 const fetchScenarios = async (userId) => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
+  await new Promise((resolve) => setTimeout(resolve, 500));
   return [
     {
       id: '1',
       title: "Gladys's Day at the Beach",
-      description: "Gladys's lost her phone at the beach! She accused the lifeguard of stealing it, who put her in a headlock for the accusation. An onlooker called 911 as the street fighter brawl occured.",
+      description:
+        "Gladys lost her phone at the beach! She accused the lifeguard of stealing it, who put her in a headlock for the accusation. An onlooker called 911 as the street fighter brawl occurred.",
       difficulty: 'Easy',
       isCompleted: false,
       createdAt: new Date().toISOString(),
@@ -19,23 +30,26 @@ const fetchScenarios = async (userId) => {
     {
       id: '2',
       title: "Chris's Depressive Episode",
-      description: "Chris had a particularly bad day at work after being told by his boss that he was a 'incompetent piece of trash'. He didn't feel safe alone after such an event, so he called 911.",
+      description:
+        "Chris had a bad day at work after being told by his boss that he was 'an incompetent piece of trash'. He didn't feel safe alone after such an event, so he called 911.",
       difficulty: 'Easy',
       isCompleted: false,
       createdAt: new Date().toISOString(),
     },
     {
       id: '3',
-      title: "Waterpark Fiasco",
-      description: "The Mendez family thought their day at the waterpark would be uneventful. Unfortunely, little timmy fell out of a hole in a waterslide, landing on his brother, johnny.",
+      title: 'Waterpark Fiasco',
+      description:
+        'The Mendez family thought their day at the waterpark would be uneventful. Unfortunately, little Timmy fell out of a hole in a waterslide, landing on his brother Johnny.',
       difficulty: 'Medium',
       isCompleted: false,
       createdAt: new Date().toISOString(),
     },
     {
       id: '4',
-      title: "Mass Casualty Event",
-      description: "An Earthquake has occured and there are currently hundreds wounded and hundreds confirmed dead.",
+      title: 'Mass Casualty Event',
+      description:
+        'An earthquake has occurred and there are currently hundreds wounded and hundreds confirmed dead.',
       difficulty: 'Hard',
       isCompleted: false,
       createdAt: new Date().toISOString(),
@@ -43,7 +57,8 @@ const fetchScenarios = async (userId) => {
     {
       id: '5',
       title: "Mark's Bad Day",
-      description: "Mark's hat flew over a fence with a 'keep out' sign. He decided to go get it, not realizing that a rollercoaster was rocketing towards him. Tiffany's leg made contact with Mark's head. The leg won.",
+      description:
+        "Mark's hat flew over a fence with a 'keep out' sign. He decided to go get it, not realizing that a rollercoaster was rocketing towards him. Tiffany's leg made contact with Mark's head. The leg won.",
       difficulty: 'Extreme',
       isCompleted: true,
       createdAt: new Date().toISOString(),
@@ -62,7 +77,7 @@ const getDifficultyColor = (difficulty) => {
 };
 
 const getDifficultyIcon = (difficulty) => {
-  switch(difficulty.toLowerCase()) {
+  switch (difficulty.toLowerCase()) {
     case 'easy':
       return <Clock color="#10b981" size={16} />;
     case 'medium':
@@ -76,11 +91,7 @@ const getDifficultyIcon = (difficulty) => {
 };
 
 const ScenarioCard = ({ scenario, onPress }) => (
-  <TouchableOpacity
-    style={styles.card}
-    activeOpacity={0.7}
-    onPress={onPress}
-  >
+  <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={onPress}>
     <View style={styles.cardHeader}>
       <Text style={styles.cardTitle}>{scenario.title}</Text>
       <View style={styles.badges}>
@@ -90,15 +101,18 @@ const ScenarioCard = ({ scenario, onPress }) => (
             <Text style={styles.completedText}>Completed</Text>
           </View>
         )}
-        <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(scenario.difficulty) }]}>
+        <View
+          style={[
+            styles.difficultyBadge,
+            { backgroundColor: getDifficultyColor(scenario.difficulty) },
+          ]}
+        >
           {getDifficultyIcon(scenario.difficulty)}
           <Text style={styles.difficultyText}>{scenario.difficulty}</Text>
         </View>
       </View>
     </View>
-    
     <Text style={styles.cardDescription}>{scenario.description}</Text>
-    
     <View style={styles.cardFooter}>
       <Text style={styles.startText}>Start Scenario →</Text>
     </View>
@@ -113,6 +127,7 @@ const ScenarioSelection = ({ navigation, route }) => {
   const userId = route?.params?.userId || 'current-user-id';
 
   useEffect(() => {
+    console.log('ScenarioSelect received userId:', userId);
     loadScenarios();
   }, []);
 
@@ -131,20 +146,55 @@ const ScenarioSelection = ({ navigation, route }) => {
   };
 
   const handleContinue = () => {
-    try {
-      Alert.alert("Unable to find scenario to continue")
-      //navigation.navigate('Review');
-    } catch (error) {
-      console.error('Navigation error:', error);
+    const lastCompleted = scenarios.find((s) => s.isCompleted);
+    if (lastCompleted) {
+      const scenarioId = `demo_${lastCompleted.id}`;
+      navigation.navigate('ScenarioReview', { userId, scenarioId });
+    } else {
+      Alert.alert('No completed scenario found');
     }
   };
 
-  const handleScenarioPress = (scenario) => {
-    try {
-      navigation.navigate('Review');
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
+  const handleScenarioPress = async (scenario) => {
+  const scenarioId = `demo_${scenario.id}`;
+  const prompt = scenario.description;
+  const userId = getAuth().currentUser?.uid;
+
+  if (!userId) {
+    Alert.alert('Error', 'User not authenticated');
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const functions = getFunctions();
+    const aiRespond = httpsCallable(functions, 'aiRespond');
+
+    const result = await aiRespond({
+      userId,
+      scenarioId,
+      prompt,
+      conversationHistory: [], // optional
+    });
+
+    const { response } = result.data as { response: string };
+
+    navigation.navigate('ScenarioReview', {
+      userId,
+      scenarioId,
+      aiResponse: response,
+    });
+  } catch (error) {
+    console.error('❌ AI error:', error);
+    Alert.alert('AI Error', 'Failed to generate review. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const handleCreateAIScenario = () => {
+    Alert.alert('AI scenario generation coming soon!');
   };
 
   return (
@@ -172,11 +222,14 @@ const ScenarioSelection = ({ navigation, route }) => {
               </View>
             ) : (
               <>
-              <TouchableOpacity 
-                style={styles.continueButton}
-                onPress={handleContinue}
-                ><Text style={styles.continueText}>Continue Previous Scenario</Text>
+                <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+                  <Text style={styles.continueText}>Continue Previous Scenario</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity style={styles.aiButton} onPress={handleCreateAIScenario}>
+                  <Text style={styles.aiButtonText}>🧠 Create AI Scenario</Text>
+                </TouchableOpacity>
+
                 <View style={styles.statsContainer}>
                   <View style={styles.statCard}>
                     <Text style={styles.statNumber}>{scenarios.length}</Text>
@@ -184,7 +237,7 @@ const ScenarioSelection = ({ navigation, route }) => {
                   </View>
                   <View style={styles.statCard}>
                     <Text style={styles.statNumber}>
-                      {scenarios.filter(s => s.isCompleted).length}
+                      {scenarios.filter((s) => s.isCompleted).length}
                     </Text>
                     <Text style={styles.statLabel}>Completed</Text>
                   </View>
@@ -216,63 +269,91 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 24,
-    paddingHorizontal: 20,
+    padding: 20,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 8,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   headerSubtitle: {
     fontSize: 16,
     color: '#cbd5e1',
-    fontWeight: '500',
+    marginTop: 4,
   },
   content: {
     padding: 20,
   },
+  loadingContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+  },
+  errorCard: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  errorText: {
+    color: '#fff',
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  retryButtonText: {
+    color: '#1a365d',
+    fontWeight: 'bold',
+  },
   continueButton: {
-    marginBottom: 15,
-    backgroundColor: '#10b981',
-    padding: 20,
-    borderRadius: 16,    
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3, 
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
   },
   continueText: {
-    fontSize: 23,
-    fontWeight: '700',
+    color: '#1a365d',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  aiButton: {
+    backgroundColor: '#2563eb',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  aiButtonText: {
     color: '#ffffff',
-    marginLeft: 27,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
   statCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
     padding: 16,
+    borderRadius: 12,
+    width: '48%',
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a365d',
   },
   statLabel: {
     fontSize: 14,
-    color: '#cbd5e1',
-    fontWeight: '500',
+    color: '#64748b',
+    marginTop: 4,
   },
   card: {
     backgroundColor: '#ffffff',
@@ -286,112 +367,67 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
   cardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a365d',
+    flex: 1,
+    marginRight: 8,
   },
   badges: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    flexWrap: 'wrap',
   },
   completedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
     backgroundColor: '#10b981',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
   },
   completedText: {
     color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
+    marginLeft: 4,
   },
   difficultyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   difficultyText: {
     color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
+    marginLeft: 4,
   },
   cardDescription: {
-    fontSize: 15,
-    color: '#64748b',
-    lineHeight: 22,
-    marginBottom: 16,
+    fontSize: 14,
+    color: '#475569',
+    marginBottom: 12,
   },
   cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    alignItems: 'flex-end',
   },
   startText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: 'bold',
     color: '#2563eb',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#ffffff',
-    fontWeight: '500',
-  },
-  errorCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#64748b',
-    marginTop: 16,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  retryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   footer: {
     textAlign: 'center',
     fontSize: 14,
     color: '#ffffff',
     fontWeight: '500',
-    marginTop: 32,
     marginBottom: 40,
   },
 });
-
 export default ScenarioSelection;

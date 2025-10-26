@@ -15,15 +15,14 @@ import AIService from '../services/aiService';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 
-const AIChatScreen = () => {
+const AIChatScreen = ({ route, navigation }) => {
+  const { initialMessage, scenarioId = 'general' } = route.params || {};
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [userId, setUserId] = useState(null);
   const scrollViewRef = useRef(null);
-
-  const scenarioId = 'general'; // You can make this dynamic later
 
   useEffect(() => {
     setMessages([{
@@ -41,32 +40,90 @@ const AIChatScreen = () => {
         setUserId(user.uid);
       } else {
         Alert.alert('Session expired', 'Please log in again.');
-        // navigation.navigate('Login'); // Uncomment if using navigation
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || loading) return;
+  useEffect(() => {
+    if (initialMessage && userId) {
+      const systemPrompt = {
+        role: 'system',
+        content: 'You are an EMT training assistant. Provide clear, scenario-based feedback and explain missed steps when asked.'
+      };
+
+      const preloadHistory = [systemPrompt, { role: 'user', content: initialMessage }];
+      setConversationHistory(preloadHistory);
+
+      const preloadMessage = {
+        id: Date.now(),
+        type: 'user',
+        content: initialMessage,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, preloadMessage]);
+      setLoading(true);
+
+      AIService.processMessage(initialMessage, preloadHistory, userId, scenarioId)
+        .then(result => {
+          console.log('✅ Parsed AI Response:', result);
+          console.log('🧠 Sending to AI:', {
+            message: initialMessage,
+            conversationHistory: preloadHistory,
+            userId,
+            scenarioId
+          });
+
+          if (result.success && result.response?.trim()) {
+            const botMessage = {
+              id: Date.now() + 1,
+              type: 'bot',
+              content: result.response,
+              timestamp: new Date(),
+              metadata: result.metadata
+            };
+            setMessages(prev => [...prev, botMessage]);
+            setConversationHistory(prev => [...prev, { role: 'assistant', content: result.response }]);
+          } else {
+            const fallback = {
+              id: Date.now() + 1,
+              type: 'bot',
+              content: 'Sorry, I wasn’t able to generate a helpful clarification. Want to rephrase or try again?',
+              timestamp: new Date(),
+              metadata: { scenario: 'fallback' }
+            };
+            setMessages(prev => [...prev, fallback]);
+          }
+        })
+        .catch((err) => {
+          console.error('❌ AI request failed:', err);
+          Alert.alert('Error', 'Failed to get AI response. Please try again.');
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [initialMessage, userId]);
+
+  const handleSendMessage = async (overrideMessage = null) => {
+    const messageToSend = overrideMessage || inputMessage;
+    if (!messageToSend.trim() || loading) return;
 
     const userMessage = {
       id: Date.now(),
       type: 'user',
-      content: inputMessage,
+      content: messageToSend,
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setConversationHistory(prev => [...prev, { role: 'user', content: inputMessage }]);
+    setConversationHistory(prev => [...prev, { role: 'user', content: messageToSend }]);
 
-    const currentInput = inputMessage;
-    setInputMessage('');
+    if (!overrideMessage) setInputMessage('');
     setLoading(true);
 
     try {
-      const result = await AIService.processMessage(currentInput, conversationHistory, userId, scenarioId);
+      const result = await AIService.processMessage(messageToSend, conversationHistory, userId, scenarioId);
 
       if (result.success) {
         const botMessage = {
@@ -111,20 +168,29 @@ const AIChatScreen = () => {
               ]}
             >
               <Text style={styles.messageText}>{message.content}</Text>
-              {message.metadata?.scenario && (
-                <Text style={styles.scenarioText}>
-                  Scenario: {message.metadata.scenario}
+              {message.metadata?.source && (
+                <Text style={styles.sourceText}>
+                  Source: {message.metadata.source === 'openai' ? 'AI-generated' : 'Fallback guidance'}
                 </Text>
+              )}
+              {message.type === 'bot' && message.content !== 'Sorry, I wasn’t able to generate a helpful clarification. Want to rephrase or try again?' && (
+                <TouchableOpacity onPress={() => handleSendMessage(initialMessage)}>
+                  <Text style={styles.retryText}>Try again</Text>
+                </TouchableOpacity>
               )}
             </View>
           ))}
-          
+
           {loading && (
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>AI is analyzing...</Text>
             </View>
           )}
         </ScrollView>
+
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backText}>← Back to Review</Text>
+        </TouchableOpacity>
 
         <View style={styles.inputContainer}>
           <TextInput
@@ -137,7 +203,7 @@ const AIChatScreen = () => {
           />
           <TouchableOpacity 
             style={[styles.sendButton, loading && styles.sendButtonDisabled]}
-            onPress={handleSendMessage}
+            onPress={() => handleSendMessage()}
             disabled={loading || !inputMessage.trim()}
           >
             <Text style={styles.sendButtonText}>Send</Text>
@@ -190,11 +256,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  scenarioText: {
+  sourceText: {
     fontSize: 12,
-    color: '#666',
+    color: '#94a3b8',
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  retryText: {
+    color: '#2563eb',
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  backText: {
+    color: '#64748b',
+    fontWeight: '600',
+    margin: 16,
+    textAlign: 'center',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -235,6 +312,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  sourceText: {
+  fontSize: 12,
+  color: '#94a3b8',
+  marginTop: 4,
+  fontStyle: 'italic',
+}
+
 });
 
 export default AIChatScreen;

@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
-import { auth, firestore } from '../firebaseConfig';
+import { auth, db } from '../firebaseConfig';
 
 
 export default function Login({ navigation }) {
@@ -31,11 +31,16 @@ export default function Login({ navigation }) {
   setLoading(true);
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log('✅ Auth success:', userCredential.user.uid);
+
     const uid = userCredential.user.uid;
+    console.log('Current user:', auth.currentUser?.uid);
 
     // 🔍 Fetch user role from Firestore
-    const userRef = doc(firestore, 'users', uid);
+    const userRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userRef);
+    console.log('✅ Firestore fetch:', userSnap.exists());
+
 
     if (userSnap.exists()) {
       const userData = userSnap.data();
