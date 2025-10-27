@@ -1,32 +1,57 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, TrendingDown, MessageSquare, RotateCcw, ArrowRight } from 'lucide-react-native';
-
+import { db } from '../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface Review {
   score: string;
-  stren1: string;
-  stren2: string;
-  stren3: string;
-  weak1: string;
-  weak2: string;
-  weak3: string;
+  strengths: string[];
+  weaknesses: string[];
   review: string;
+  actionsTaken?: string[];
 }
 
-export default function ScenarioReview({ navigation }) {
-  const Review: Review = {
-    score: '90',
-    stren1: 'Vitals',
-    stren2: 'Bleeding Procedure',
-    stren3: 'Patient Tagging',
-    weak1: 'Patient Tagging',
-    weak2: 'Taking Pulse',
-    weak3: 'Bedside Manner',
-    review: "You did a really solid job on this scenario. Your vitals were accurate and consistent, and your bleeding control was handled exactly the way it should be—quick, calm, and effective. You clearly know your procedures and how to apply them under pressure. That said, I'd like to see you focus a bit more on your patient interaction next time. Take a little extra time with your patient questioning and pulse taking, and work on keeping your tone and presence reassuring throughout. You've got the technical side down—now it's about bringing that human touch to match it. Great work—keep tightening up your communication, and you'll be operating at a professional level in no time.",
-  };
+export default function ScenarioReview({ navigation, route }) {
+  const { userId = 'abc123', scenarioId = 'burnVictim01', review = null } = route.params || {};
+  const [reviewData, setReviewData] = useState<Review | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    console.log('ScenarioReview received:', userId, scenarioId);
+
+    const fetchReview = async () => {
+      try {
+        if (review) {
+          console.log('✅ Using review from navigation');
+          setReviewData(review);
+        } else {
+          const docRef = doc(db, 'scenarioReviews', scenarioId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setReviewData({
+              score: data.score,
+              strengths: data.strengths,
+              weaknesses: data.weaknesses,
+              review: data.review,
+              actionsTaken: data.actionsTaken || [],
+            });
+          } else {
+            console.warn('No review found in Firestore.');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching review:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReview();
+  }, [userId, scenarioId]);
 
   const getScoreColor = (score: string) => {
     const numScore = parseInt(score);
@@ -43,36 +68,60 @@ export default function ScenarioReview({ navigation }) {
   };
 
   const handleContinue = () => {
-    try {
-      navigation.navigate('ScenarioSelect');
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
+    navigation.navigate('ScenarioSelect', { userId });
   };
 
   const handleRetry = () => {
-    try {
-      navigation.navigate('Home');
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
+    navigation.navigate('ScenarioWork', { userId, scenarioId });
   };
 
   const handleExplain = () => {
-    try {
-      navigation.navigate('AIChatScreen'); //error
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
+    const actions = reviewData?.actionsTaken?.length
+      ? reviewData.actionsTaken.join(', ')
+      : 'none listed';
+
+    const prompt = `In scenario ${scenarioId}, I received this feedback: "${reviewData?.review}". Here are the actions I took: ${actions}. What specific escalation step did I miss, and what should I have done differently as a responder?`;
+
+    console.log('🧠 Prompt to AI:', prompt);
+
+    navigation.navigate('AIChatScreen', { initialMessage: prompt, scenarioId });
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
+          <View style={styles.scrollContent}>
+            <ActivityIndicator size="large" color="#ffffff" />
+            <Text style={styles.headerSubtitle}>Loading review...</Text>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
+
+  if (!reviewData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
+          <View style={styles.scrollContent}>
+            <Text style={styles.headerTitle}>No Review Found</Text>
+            <Text style={styles.headerSubtitle}>We couldn’t find feedback for this scenario.</Text>
+
+            <TouchableOpacity style={[styles.actionButton, styles.retryButton]} onPress={handleRetry}>
+              <RotateCcw color="#64748b" size={20} />
+              <Text style={styles.retryButtonText}>Retry Scenario</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Scenario Debrief</Text>
             <Text style={styles.headerSubtitle}>Performance Review & Feedback</Text>
@@ -82,56 +131,74 @@ export default function ScenarioReview({ navigation }) {
           <View style={styles.scoreCard}>
             <Text style={styles.scoreLabel}>Overall Performance</Text>
             <View style={styles.scoreCircle}>
-              <Text style={[styles.scoreValue, { color: getScoreColor(Review.score) }]}>
-                {Review.score}
+              <Text style={[styles.scoreValue, { color: getScoreColor(reviewData.score) }]}>
+                {reviewData.score}
               </Text>
               <Text style={styles.scoreOutOf}>/100</Text>
             </View>
-            <Text style={[styles.scoreBadge, { color: getScoreColor(Review.score) }]}>
-              {getScoreLabel(Review.score)}
+            <Text style={[styles.scoreBadge, { color: getScoreColor(reviewData.score) }]}>
+              {getScoreLabel(reviewData.score)}
             </Text>
           </View>
 
-          {/* Strengths Card */}
+          {/* Strengths */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <TrendingUp color="#10b981" size={24} />
               <Text style={styles.cardTitle}>Strengths</Text>
             </View>
             <View style={styles.itemList}>
-              {[Review.stren1, Review.stren2, Review.stren3].map((strength, index) => (
-                <View key={index} style={styles.listItem}>
+              {reviewData.strengths.map((s, i) => (
+                <View key={i} style={styles.listItem}>
                   <View style={[styles.bulletPoint, { backgroundColor: '#10b981' }]} />
-                  <Text style={styles.listItemText}>{strength}</Text>
+                  <Text style={styles.listItemText}>{s}</Text>
                 </View>
               ))}
             </View>
           </View>
 
-          {/* Areas for Improvement Card */}
+          {/* Weaknesses */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <TrendingDown color="#f59e0b" size={24} />
               <Text style={styles.cardTitle}>Areas for Improvement</Text>
             </View>
             <View style={styles.itemList}>
-              {[Review.weak1, Review.weak2, Review.weak3].map((weakness, index) => (
-                <View key={index} style={styles.listItem}>
+              {reviewData.weaknesses.map((w, i) => (
+                <View key={i} style={styles.listItem}>
                   <View style={[styles.bulletPoint, { backgroundColor: '#f59e0b' }]} />
-                  <Text style={styles.listItemText}>{weakness}</Text>
+                  <Text style={styles.listItemText}>{w}</Text>
                 </View>
               ))}
             </View>
           </View>
 
-          {/* AI Review Card */}
+          {/* Actions Taken */}
+          {reviewData.actionsTaken?.length > 0 && (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <TrendingUp color="#3b82f6" size={24} />
+                <Text style={styles.cardTitle}>Actions Taken</Text>
+              </View>
+              <View style={styles.itemList}>
+                {reviewData.actionsTaken.map((action, i) => (
+                  <View key={i} style={styles.listItem}>
+                    <View style={[styles.bulletPoint, { backgroundColor: '#3b82f6' }]} />
+                    <Text style={styles.listItemText}>{action}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* AI Review */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <MessageSquare color="#2563eb" size={24} />
               <Text style={styles.cardTitle}>Detailed Feedback</Text>
             </View>
-            <Text style={styles.reviewText}>{Review.review}</Text>
-            
+            <Text style={styles.reviewText}>{reviewData.review}</Text>
+
             <TouchableOpacity style={styles.explainButton} onPress={handleExplain}>
               <MessageSquare color="#2563eb" size={18} />
               <Text style={styles.explainButtonText}>Ask AI for clarification</Text>
@@ -140,18 +207,12 @@ export default function ScenarioReview({ navigation }) {
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.retryButton]} 
-              onPress={handleRetry}
-            >
+            <TouchableOpacity style={[styles.actionButton, styles.retryButton]} onPress={handleRetry}>
               <RotateCcw color="#64748b" size={20} />
               <Text style={styles.retryButtonText}>Retry Scenario</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.continueButton]} 
-              onPress={handleContinue}
-            >
+
+            <TouchableOpacity style={[styles.actionButton, styles.continueButton]} onPress={handleContinue}>
               <Text style={styles.continueButtonText}>Continue</Text>
               <ArrowRight color="#ffffff" size={20} />
             </TouchableOpacity>
@@ -162,9 +223,11 @@ export default function ScenarioReview({ navigation }) {
 
         <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
       </LinearGradient>
+    
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

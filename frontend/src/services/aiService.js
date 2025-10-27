@@ -3,10 +3,18 @@ const BASE_URL = 'https://us-central1-emt-triage-training-app.cloudfunctions.net
 class AIService {
   async processMessage(message, conversationHistory = [], userId = 'unknown', scenarioId = 'general') {
     try {
+      
+
       const response = await fetch(`${BASE_URL}/aiRespond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: message, userId, scenarioId })
+        body: JSON.stringify({ prompt: message, userId, scenarioId, messages: conversationHistory })
+      });
+      console.log('📤 Sending payload:', {
+        prompt: message,
+        userId,
+        scenarioId,
+        messages: conversationHistory
       });
 
       const text = await response.text();

@@ -1,13 +1,10 @@
-import { initializeApp, getApps } from 'firebase/app';
-import {
-  initializeAuth,
-  getReactNativePersistence,
-} from 'firebase/auth';
+// firebaseConfig.js
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
-
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyD-qOkPxqCCAXOBq_nuB6rKGcSrOw6mDcI',
@@ -29,17 +26,13 @@ const firebaseConfig = {
 //   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 // };
 
-// ✅ Add this log right here
-console.log('🔍 Firebase Config:', firebaseConfig);
-const app = getApps().length === 0
-  ? initializeApp(firebaseConfig)
-  : getApps()[0];
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+  persistence: getReactNativePersistence(AsyncStorage),
 });
 
-const firestore = getFirestore(app);
+const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
 
@@ -47,4 +40,4 @@ if (__DEV__) {
   connectFunctionsEmulator(functions, 'localhost', 5001);
 }
 
-export { app, auth, firestore, storage, functions };
+export { app, auth, db, storage, functions };
