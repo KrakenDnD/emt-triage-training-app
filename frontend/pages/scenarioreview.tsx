@@ -15,7 +15,7 @@ interface Review {
 }
 
 export default function ScenarioReview({ navigation, route }) {
-  const { userId = 'abc123', scenarioId = 'burnVictim01', aiResponse = null } = route.params || {};
+  const { userId = 'abc123', scenarioId = 'burnVictim01', review = null } = route.params || {};
   const [reviewData, setReviewData] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,28 +24,24 @@ export default function ScenarioReview({ navigation, route }) {
 
     const fetchReview = async () => {
       try {
-        const docRef = doc(db, 'scenarioReviews', scenarioId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setReviewData({
-            score: data.score,
-            strengths: data.strengths,
-            weaknesses: data.weaknesses,
-            review: data.review,
-            actionsTaken: data.actionsTaken || [],
-          });
-        } else if (aiResponse) {
-          console.warn('No Firestore review found — using aiResponse from navigation.');
-          setReviewData({
-            score: '80',
-            strengths: ['Calm demeanor'],
-            weaknesses: ['Missed escalation'],
-            review: aiResponse,
-            actionsTaken: [],
-          });
+        if (review) {
+          console.log('✅ Using review from navigation');
+          setReviewData(review);
         } else {
-          console.warn('No review found and no aiResponse provided.');
+          const docRef = doc(db, 'scenarioReviews', scenarioId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setReviewData({
+              score: data.score,
+              strengths: data.strengths,
+              weaknesses: data.weaknesses,
+              review: data.review,
+              actionsTaken: data.actionsTaken || [],
+            });
+          } else {
+            console.warn('No review found in Firestore.');
+          }
         }
       } catch (error) {
         console.error('Error fetching review:', error);
@@ -56,7 +52,6 @@ export default function ScenarioReview({ navigation, route }) {
 
     fetchReview();
   }, [userId, scenarioId]);
-
 
   const getScoreColor = (score: string) => {
     const numScore = parseInt(score);
@@ -81,19 +76,16 @@ export default function ScenarioReview({ navigation, route }) {
   };
 
   const handleExplain = () => {
-  const actions = reviewData?.actionsTaken?.length
-    ? reviewData.actionsTaken.join(', ')
-    : 'none listed';
+    const actions = reviewData?.actionsTaken?.length
+      ? reviewData.actionsTaken.join(', ')
+      : 'none listed';
 
-  const prompt = `In scenario ${scenarioId}, I received this feedback: "${reviewData?.review}". Here are the actions I took: ${actions}. What specific escalation step did I miss, and what should I have done differently as a responder?`;
+    const prompt = `In scenario ${scenarioId}, I received this feedback: "${reviewData?.review}". Here are the actions I took: ${actions}. What specific escalation step did I miss, and what should I have done differently as a responder?`;
 
+    console.log('🧠 Prompt to AI:', prompt);
 
-  console.log('🧠 Prompt to AI:', prompt);
-
-  navigation.navigate('AIChatScreen', { initialMessage: prompt, scenarioId: scenarioId });
-};
-
-
+    navigation.navigate('AIChatScreen', { initialMessage: prompt, scenarioId });
+  };
 
   if (loading) {
     return (
@@ -199,7 +191,6 @@ export default function ScenarioReview({ navigation, route }) {
             </View>
           )}
 
-
           {/* AI Review */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -232,6 +223,7 @@ export default function ScenarioReview({ navigation, route }) {
 
         <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
       </LinearGradient>
+    
     </SafeAreaView>
   );
 }

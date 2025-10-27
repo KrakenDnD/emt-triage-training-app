@@ -7,17 +7,17 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig'; 
+import { db } from '../firebaseConfig';
 
 const demoScenarios = {
   demo_1: {
     title: "Gladys's Day at the Beach",
-    description:
-      "Gladys accused the lifeguard of stealing her phone. A physical altercation followed. You're the responder.",
+    description: "Gladys accused the lifeguard of stealing her phone. A physical altercation followed. You're the responder.",
     question: "What’s your first action on arrival?",
     options: [
       { text: 'Separate the individuals and assess for injuries', outcome: 'You de-escalated the situation and ensured safety.', score: 90 },
@@ -26,7 +26,50 @@ const demoScenarios = {
       { text: 'Call for backup before engaging', outcome: 'You delayed intervention, risking further harm.', score: 70 },
     ],
   },
-  // demo_2 through demo_5 unchanged...
+  demo_2: {
+    title: "Chris's Depressive Episode",
+    description: "Chris had a bad day at work and called 911 feeling unsafe. You're the responder.",
+    question: "How do you approach Chris?",
+    options: [
+      { text: 'Speak calmly and assess his mental state', outcome: 'You build trust and gather key info.', score: 85 },
+      { text: 'Ask him to explain what happened', outcome: 'He feels overwhelmed and shuts down.', score: 60 },
+      { text: 'Call for psychiatric backup immediately', outcome: 'You escalate too quickly without rapport.', score: 70 },
+      { text: 'Tell him to breathe and relax', outcome: 'Helpful but lacks full assessment.', score: 75 },
+    ],
+  },
+  demo_3: {
+    title: 'Waterpark Fiasco',
+    description: 'Timmy fell from a waterslide onto Johnny. You arrive at a chaotic scene.',
+    question: 'What’s your first move?',
+    options: [
+      { text: 'Control bleeding and check vitals', outcome: 'You stabilize the patient quickly.', score: 90 },
+      { text: 'Move the crowd away', outcome: 'You improve safety but delay treatment.', score: 70 },
+      { text: 'Tag the patient and wait for backup', outcome: 'You miss critical early care.', score: 60 },
+      { text: 'Ask the family what happened', outcome: 'You gather info but delay intervention.', score: 65 },
+    ],
+  },
+  demo_4: {
+    title: 'Mass Casualty Event',
+    description: 'An earthquake has left many wounded. You’re leading triage.',
+    question: 'What’s your priority?',
+    options: [
+      { text: 'Triage and tag patients by severity', outcome: 'You organize care effectively.', score: 92 },
+      { text: 'Secure unstable structures', outcome: 'You reduce risk but delay triage.', score: 80 },
+      { text: 'Call for mass casualty backup', outcome: 'Important but not immediate care.', score: 75 },
+      { text: 'Comfort the most injured patient', outcome: 'Compassionate but inefficient triage.', score: 65 },
+    ],
+  },
+  demo_5: {
+    title: "Mark's Bad Day",
+    description: "Mark was hit by a rollercoaster. You arrive to assess the scene.",
+    question: "What’s your first action?",
+    options: [
+      { text: 'Secure the scene and check vitals', outcome: 'You act quickly and safely.', score: 88 },
+      { text: 'Apply pressure to the head wound', outcome: 'You treat but miss scene safety.', score: 75 },
+      { text: 'Tag the patient and call for help', outcome: 'You skip initial care.', score: 60 },
+      { text: 'Ask bystanders what happened', outcome: 'You gather info but delay treatment.', score: 70 },
+    ],
+  },
 };
 
 export default function ScenarioWork({ navigation, route }) {
@@ -77,7 +120,7 @@ export default function ScenarioWork({ navigation, route }) {
 
     try {
       setSubmitted(true);
-      await fetch('https://us-central1-emt-triage-training-app.cloudfunctions.net/api/generate-scenario-review', {
+      const response = await fetch('https://us-central1-emt-triage-training-app.cloudfunctions.net/api/generate-scenario-review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,7 +133,31 @@ export default function ScenarioWork({ navigation, route }) {
         }),
       });
 
-      navigation.navigate('ScenarioReview', { userId, scenarioId });
+      const result = await response.json();
+      console.log('✅ Review result:', result);
+
+      if (result.success && result.review) {
+        navigation.navigate('ScenarioReview', {
+          userId,
+          scenarioId,
+          review: result.review,
+        });
+      } else {
+        console.warn('⚠️ Review generation failed — using fallback');
+        const fallbackReview = {
+          score: selectedOption.score.toString(),
+          strengths: ['Calm demeanor'],
+          weaknesses: ['Missed escalation'],
+          review: 'Fallback review: AI was unable to generate a detailed response.',
+          actionsTaken: [selectedOption.text, ...notes.split(',')],
+        };
+        console.log('➡️ Navigating with fallback review:', fallbackReview);
+        navigation.navigate('ScenarioReview', {
+          userId,
+          scenarioId,
+          review: fallbackReview,
+        });
+      }
     } catch (error) {
       console.error('Error submitting scenario:', error);
       Alert.alert('Failed to submit scenario');
@@ -100,7 +167,17 @@ export default function ScenarioWork({ navigation, route }) {
 
   const handleAutoSubmit = () => {
     setSubmitted(true);
-    navigation.navigate('ScenarioReview', { userId, scenarioId });
+    navigation.navigate('ScenarioReview', {
+      userId,
+      scenarioId,
+      review: {
+        score: selectedOption?.score?.toString() || '65',
+        strengths: ['Calm demeanor'],
+        weaknesses: ['Missed escalation'],
+        review: 'Auto-submitted fallback review due to timeout.',
+        actionsTaken: [selectedOption?.text || 'No action selected', ...notes.split(',')],
+      },
+    });
   };
 
   return (
@@ -109,10 +186,9 @@ export default function ScenarioWork({ navigation, route }) {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Text style={styles.title}>{scenarioMeta?.title || scenario.title}</Text>
           <Text style={styles.description}>{scenarioMeta?.description || scenario.description}</Text>
-
           <Text style={styles.timer}>Time left: {timeLeft}s</Text>
-
           <Text style={styles.question}>{scenario.question}</Text>
+
           {scenario.options.map((option, index) => (
             <TouchableOpacity
               key={index}
@@ -154,7 +230,7 @@ export default function ScenarioWork({ navigation, route }) {
             </View>
           )}
 
-          {!submitted && (
+          {!submitted ? (
             <TouchableOpacity
               style={styles.submitButton}
               onPress={timeout ? handleAutoSubmit : handleSubmit}
@@ -163,6 +239,8 @@ export default function ScenarioWork({ navigation, route }) {
                 {timeout ? 'Submit Anyway' : 'Submit Scenario'}
               </Text>
             </TouchableOpacity>
+          ) : (
+            <ActivityIndicator size="large" color="#ffffff" style={{ marginTop: 24 }} />
           )}
         </ScrollView>
       </LinearGradient>

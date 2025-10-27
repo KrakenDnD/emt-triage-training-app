@@ -9,11 +9,13 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
+console.log('🔑 OpenAI Key Loaded:', !!OPENAI_KEY);
 
 exports.aiRespond = functions.https.onRequest(async (req, res) => {
   const { userId, scenarioId, prompt, conversationHistory } = req.body;
 
   if (!prompt || !userId || !scenarioId) {
+    console.warn('⚠️ Missing required fields:', { userId, scenarioId, prompt });
     return res.status(400).json({ error: 'Missing required fields.' });
   }
 
@@ -21,12 +23,14 @@ exports.aiRespond = functions.https.onRequest(async (req, res) => {
     ? conversationHistory
     : [{ role: 'user', content: prompt }];
 
+  console.log('📩 Payload received:', { userId, scenarioId, prompt });
+
   try {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
         model: 'gpt-3.5-turbo',
-        messages: messages,
+        messages,
         temperature: 0.7,
       },
       {
@@ -42,51 +46,64 @@ exports.aiRespond = functions.https.onRequest(async (req, res) => {
     const fallbackUsed = !generatedText;
     const finalResponse = generatedText || await getFallback(scenarioId);
 
-    await db.collection('aiResponses').add({
-      userId,
-      scenarioId,
-      prompt,
-      response: finalResponse,
-      fallbackUsed,
-      model: 'gpt-3.5-turbo',
-      source: fallbackUsed ? 'fallback' : 'openai',
-      status: fallbackUsed ? 'error' : 'success',
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    console.log('🧠 AI response:', finalResponse);
 
-    await db.collection('clarificationRequests').add({
-      userId,
-      scenarioId,
-      prompt,
-      response: finalResponse,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    await Promise.all([
+      db.collection('aiResponses').add({
+        userId,
+        scenarioId,
+        prompt,
+        response: finalResponse,
+        fallbackUsed,
+        model: 'gpt-3.5-turbo',
+        source: fallbackUsed ? 'fallback' : 'openai',
+        status: fallbackUsed ? 'error' : 'success',
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      }),
+      db.collection('clarificationRequests').add({
+        userId,
+        scenarioId,
+        prompt,
+        response: finalResponse,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      }),
+    ]);
 
     return res.json({ success: !fallbackUsed, response: finalResponse });
   } catch (error) {
-    console.error('❌ OpenAI Error:', error.message);
+    console.error('❌ OpenAI Error:', error.message, error.response?.data);
 
-    const fallback = await getFallback(scenarioId);
+    let fallback = 'Fallback guidance unavailable.';
+    try {
+      fallback = await getFallback(scenarioId);
+    } catch (fallbackError) {
+      console.error('❌ Fallback fetch failed:', fallbackError.message);
+    }
 
-    await db.collection('aiResponses').add({
-      userId,
-      scenarioId,
-      prompt,
-      response: fallback,
-      fallbackUsed: true,
-      model: 'gpt-3.5-turbo',
-      source: 'fallback',
-      status: 'error',
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    await db.collection('aiErrors').add({
-      userId,
-      scenarioId,
-      prompt,
-      error: error.message,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    try {
+      await Promise.all([
+        db.collection('aiResponses').add({
+          userId,
+          scenarioId,
+          prompt,
+          response: fallback,
+          fallbackUsed: true,
+          model: 'gpt-3.5-turbo',
+          source: 'fallback',
+          status: 'error',
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        }),
+        db.collection('aiErrors').add({
+          userId,
+          scenarioId,
+          prompt,
+          error: error.message,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        }),
+      ]);
+    } catch (dbError) {
+      console.error('❌ Firestore write failed:', dbError.message);
+    }
 
     return res.json({ success: false, response: fallback });
   }

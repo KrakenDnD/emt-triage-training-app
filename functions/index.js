@@ -483,17 +483,24 @@ app.post('/generate-scenario-review', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const prompt = `
-  You are an emergency response evaluator. A trainee responded to scenario "${scenarioId}" with the following actions: "${actionsTaken.join(', ')}".
-  Here are the scenario details: "${scenarioDescription}".
-  Please evaluate their performance by answering:
-  - Did they escalate appropriately?
-  - Did they prioritize the correct medical steps?
-  - Did they communicate effectively?
-  - Did they miss any critical steps?
+  // Fetch scenario metadata from Firestore
+const scenarioDoc = await admin.firestore().collection('scenarios').doc(scenarioId).get();
+const scenarioData = scenarioDoc.exists ? scenarioDoc.data() : {};
+const scenarioDescription = scenarioData.description || 'No description available';
+const actionsTaken = notes?.length ? notes : ['No actions provided'];
 
-  Return a score (0–100), 2 strengths, 2 weaknesses, and a short review paragraph.
-  `;
+// Build the prompt
+const prompt = `
+You are an emergency response evaluator. A trainee responded to scenario "${scenarioId}" with the following actions: "${actionsTaken.join(', ')}".
+Here are the scenario details: "${scenarioDescription}".
+Please evaluate their performance by answering:
+- Did they escalate appropriately?
+- Did they prioritize the correct medical steps?
+- Did they communicate effectively?
+- Did they miss any critical steps?
+
+Return a score (0–100), 2 strengths, 2 weaknesses, and a short review paragraph.
+`;
 
 
   try {

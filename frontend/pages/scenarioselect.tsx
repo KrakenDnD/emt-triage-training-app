@@ -11,8 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle, Clock, Users, AlertTriangle } from 'lucide-react-native';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions} from 'firebase/functions';
 import { getAuth } from 'firebase/auth';
+
 
 
 const fetchScenarios = async (userId) => {
@@ -149,49 +150,25 @@ const ScenarioSelection = ({ navigation, route }) => {
     const lastCompleted = scenarios.find((s) => s.isCompleted);
     if (lastCompleted) {
       const scenarioId = `demo_${lastCompleted.id}`;
-      navigation.navigate('ScenarioReview', { userId, scenarioId });
+      navigation.navigate('ScenarioWork', { userId, scenarioId });
     } else {
       Alert.alert('No completed scenario found');
     }
   };
 
-  const handleScenarioPress = async (scenario) => {
+ const handleScenarioPress = (scenario) => {
   const scenarioId = `demo_${scenario.id}`;
-  const prompt = scenario.description;
-  const userId = getAuth().currentUser?.uid;
 
   if (!userId) {
     Alert.alert('Error', 'User not authenticated');
     return;
   }
 
-  try {
-    setLoading(true);
-    const functions = getFunctions();
-    const aiRespond = httpsCallable(functions, 'aiRespond');
-
-    const result = await aiRespond({
-      userId,
-      scenarioId,
-      prompt,
-      conversationHistory: [], // optional
-    });
-
-    const { response } = result.data as { response: string };
-
-    navigation.navigate('ScenarioReview', {
-      userId,
-      scenarioId,
-      aiResponse: response,
-    });
-  } catch (error) {
-    console.error('❌ AI error:', error);
-    Alert.alert('AI Error', 'Failed to generate review. Please try again.');
-  } finally {
-    setLoading(false);
-  }
+  navigation.navigate('ScenarioWork', {
+    userId,
+    scenarioId,
+  });
 };
-
 
   const handleCreateAIScenario = () => {
     Alert.alert('AI scenario generation coming soon!');
