@@ -156,6 +156,7 @@ export default function InstructorProfile({ navigation }) {
             {/* Analytics Card */}
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Class Performance Analytics</Text>
+              
               <View style={styles.chartContainer}>
                 {analyticsData.map((item, index) => (
                   <View key={index} style={styles.chartItem}>
@@ -249,10 +250,20 @@ export default function InstructorProfile({ navigation }) {
             
             <TouchableOpacity 
               style={styles.navButton}
-              onPress={() => handleButtonPress('ScenarioSelect')}
+              onPress={() => handleButtonPress('ClassEdit')}
             >
               <View style={styles.navButtonContent}>
                 <Text style={styles.navButtonText}>Edit Class Roster</Text>
+                <Text style={styles.navButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navButton}
+              onPress={() => handleButtonPress('InstructorProgress')}
+            >
+              <View style={styles.navButtonContent}>
+                <Text style={styles.navButtonText}>See Student Progress</Text>
                 <Text style={styles.navButtonArrow}>→</Text>
               </View>
             </TouchableOpacity>

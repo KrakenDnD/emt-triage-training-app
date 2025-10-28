@@ -20,7 +20,7 @@ import { useEffect, useRef } from 'react';
 import Login from './pages/login.tsx';
 import Signup from './pages/signup.tsx';
 import AIChatScreen from './src/screens/AIChatScreen.js';
-import Loading from './pages/Loading';
+import Loading from './pages/loading';
 import ConnectionLost from './pages/connectionlost';
 import ReferenceLib from './pages/referencelib';
 import Glossary from './pages/glossary';
@@ -33,6 +33,8 @@ import CustomizeAI from './pages/customizeAI';
 import History from './pages/history';
 import ScenarioReview from './pages/scenarioreview';
 import ScenarioWork from './pages/scenariowork';
+import InstructorProgress from './pages/instructorprogress';
+import ClassEdit from './pages/classedit';
 
 const Stack = createStackNavigator();
 
@@ -145,8 +147,8 @@ export default function App() {
         <Stack.Screen name="AIChatScreen" component={AIChatScreen} />
         <Stack.Screen name="ScenarioReview" component={ScenarioReview} />
         <Stack.Screen name="ScenarioWork" component={ScenarioWork} />
-
-
+        <Stack.Screen name="InstructorProgress" component={InstructorProgress} />
+        <Stack.Screen name="ClassEdit" component={ClassEdit} />
       </Stack.Navigator>
     </NavigationContainer>
   );
