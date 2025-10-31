@@ -77,6 +77,59 @@ class ProfileService {
     });
   }
 }
+
+const NavigationButton = ({ title, onPress }) => (
+  <TouchableOpacity style={styles.navButton} onPress={onPress}>
+    <View style={styles.navButtonContent}>
+      <Text style={styles.navButtonText}>{title}</Text>
+      <Text style={styles.navButtonArrow}>→</Text>
+    </View>
+  </TouchableOpacity>
+);
+
+// Modular Action Button Component (for Save/Cancel)
+const ActionButton = ({ 
+  title, 
+  onPress, 
+  icon: Icon, 
+  variant = 'primary', 
+  disabled = false,
+  isLoading = false 
+}) => {
+  const isPrimary = variant === 'primary';
+  
+  return (
+    <TouchableOpacity
+      style={[
+        styles.actionButton,
+        isPrimary ? styles.saveButton : styles.cancelButton,
+        disabled && styles.buttonDisabled
+      ]}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      {isLoading ? (
+        <ActivityIndicator size="small" color={isPrimary ? '#fff' : '#64748b'} />
+      ) : (
+        <>
+          {Icon && <Icon color={isPrimary ? '#ffffff' : '#64748b'} size={20} />}
+          <Text style={isPrimary ? styles.saveButtonText : styles.cancelButtonText}>
+            {title}
+          </Text>
+        </>
+      )}
+    </TouchableOpacity>
+  );
+};
+
+const IconButton = ({ icon: Icon, onPress, style }) => (
+  <TouchableOpacity 
+    onPress={onPress}
+    style={[styles.editIconButton, style]}
+  >
+    <Icon color="#ffffff" size={20} />
+  </TouchableOpacity>
+);
   
 const profileService = new ProfileService();
 
@@ -218,12 +271,10 @@ export default function StudentProfile({ navigation }) {
           <View style={styles.header}>
             <View style={styles.headerContent}>
               {!isEditingProfile && (
-                <TouchableOpacity 
+                <IconButton 
+                  icon={Edit3}
                   onPress={() => setIsEditingProfile(true)}
-                  style={styles.editIconButton}
-                >
-                  <Edit3 color="#ffffff" size={20} />
-                </TouchableOpacity>
+                />
               )}
             </View>
           </View>
@@ -406,28 +457,21 @@ export default function StudentProfile({ navigation }) {
           {/* Action Buttons */}
           {isEditingProfile && (
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.cancelButton]}
+              <ActionButton
+                title="Cancel"
+                icon={X}
+                variant="secondary"
                 onPress={cancelEdit}
                 disabled={isSaving}
-              >
-                <X color="#64748b" size={20} />
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.saveButton, isSaving && styles.buttonDisabled]}
+              />
+              <ActionButton
+                title="Save Changes"
+                icon={Check}
+                variant="primary"
                 onPress={saveProfile}
                 disabled={isSaving}
-              >
-                {isSaving ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Check color="#ffffff" size={20} />
-                    <Text style={styles.saveButtonText}>Save Changes</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                isLoading={isSaving}
+              />
             </View>
           )}
 
@@ -435,65 +479,35 @@ export default function StudentProfile({ navigation }) {
           <View style={styles.navigationSection}>
             <Text style={styles.navigationTitle}>Quick Actions</Text>
             
-            <TouchableOpacity 
-              style={styles.navButton}
+            <NavigationButton
+              title="Scenario Selection"
               onPress={() => handleButtonPress('ScenarioSelect')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Scenario Selection</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
+            <NavigationButton
+              title="Customize EMTelligence"
               onPress={() => handleButtonPress('CustomizeAI')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Customize EMTelligence</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
-              onPress={() => handleButtonPress('AIChat')} 
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Ask EMTelligence A Question</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            <NavigationButton
+              title="Ask EMTelligence A Question"
+              onPress={() => handleButtonPress('AIChat')}
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
+            <NavigationButton
+              title="Reference Library"
               onPress={() => handleButtonPress('ReferenceLib')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Reference Library</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
-              //onPress={() => handleButtonPress('Analytics')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Analytics</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            <NavigationButton
+              title="Analytics"
+              //onPress={() => handleButtonPress('')} 
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
+            <NavigationButton
+              title="History"
               onPress={() => handleButtonPress('History')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>History</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            />
           </View>
 
           <Text style={styles.footer}>Developed by CodeBlue Collective</Text>

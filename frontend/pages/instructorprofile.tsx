@@ -4,6 +4,39 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GraduationCap, Users, BookOpen, Send } from 'lucide-react-native';
 
+const NavigationButton = ({ title, onPress }) => (
+  <TouchableOpacity style={styles.navButton} onPress={onPress}>
+    <View style={styles.navButtonContent}>
+      <Text style={styles.navButtonText}>{title}</Text>
+      <Text style={styles.navButtonArrow}>→</Text>
+    </View>
+  </TouchableOpacity>
+);
+
+const ClassButton = ({ className, isSelected, onPress }) => (
+  <TouchableOpacity
+    style={[
+      styles.classButton,
+      isSelected && styles.classButtonSelected
+    ]}
+    onPress={onPress}
+  >
+    <Text style={[
+      styles.classButtonText,
+      isSelected && styles.classButtonTextSelected
+    ]}>
+      {className}
+    </Text>
+  </TouchableOpacity>
+);
+
+const PrimaryButton = ({ title, icon: Icon, onPress }) => (
+  <TouchableOpacity style={styles.saveButton} onPress={onPress}>
+    {Icon && <Icon color="#ffffff" size={18} />}
+    <Text style={styles.saveButtonText}>{title}</Text>
+  </TouchableOpacity>
+);
+
 export default function InstructorProfile({ navigation }) {
   const [selectedClass, setSelectedClass] = useState('Class #1');
   const [homeworkText, setHomeworkText] = useState('');
@@ -94,13 +127,13 @@ export default function InstructorProfile({ navigation }) {
     }
   };
   
- const handleButtonPress = (route) => {
+  const handleButtonPress = (route) => {
     try {
       navigation.navigate(route);
     } catch (error) {
       console.error('Navigation error:', error);
     }
- }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -133,21 +166,12 @@ export default function InstructorProfile({ navigation }) {
                 <Text style={styles.classSectionTitle}>Select Class</Text>
                 <View style={styles.classSelector}>
                   {classes.map((className) => (
-                    <TouchableOpacity
+                    <ClassButton
                       key={className}
-                      style={[
-                        styles.classButton,
-                        selectedClass === className && styles.classButtonSelected
-                      ]}
+                      className={className}
+                      isSelected={selectedClass === className}
                       onPress={() => setSelectedClass(className)}
-                    >
-                      <Text style={[
-                        styles.classButtonText,
-                        selectedClass === className && styles.classButtonTextSelected
-                      ]}>
-                        {className}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ))}
                 </View>
               </View>
@@ -235,50 +259,33 @@ export default function InstructorProfile({ navigation }) {
                 onChangeText={setHomeworkText}
               />
               
-              <TouchableOpacity 
-                style={styles.saveButton} 
+              <PrimaryButton
+                title="Save & Send to Class"
+                icon={Send}
                 onPress={handleSaveHomework}
-              >
-                <Send color="#ffffff" size={18} />
-                <Text style={styles.saveButtonText}>Save & Send to Class</Text>
-              </TouchableOpacity>
+              />
             </View>
           
-        {/* Navigation Section */}
-          <View style={styles.navigationSection}>
-            <Text style={styles.navigationTitle}>Quick Actions</Text>
-            
-            <TouchableOpacity 
-              style={styles.navButton}
-              onPress={() => handleButtonPress('ClassEdit')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Edit Class Roster</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            {/* Navigation Section */}
+            <View style={styles.navigationSection}>
+              <Text style={styles.navigationTitle}>Quick Actions</Text>
+              
+              <NavigationButton
+                title="Edit Class Roster"
+                onPress={() => handleButtonPress('ClassEdit')}
+              />
 
-            <TouchableOpacity 
-              style={styles.navButton}
-              onPress={() => handleButtonPress('InstructorProgress')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>See Student Progress</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+              <NavigationButton
+                title="See Student Progress"
+                onPress={() => handleButtonPress('InstructorProgress')}
+              />
 
-            <TouchableOpacity 
-              style={styles.navButton}
-              onPress={() => handleButtonPress('CustomizeAI')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Create Custom Scenarios</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+              <NavigationButton
+                title="Create Custom Scenarios"
+                onPress={() => handleButtonPress('CustomizeAI')}
+              />
             </View>
-            </View>
+          </View>
 
           <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
         </ScrollView>
