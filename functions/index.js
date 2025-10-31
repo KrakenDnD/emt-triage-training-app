@@ -617,6 +617,56 @@ app.get('/seed-user-profiles', async (req, res) => {
   }
 });
 
+app.post('/seed-reference-library', async (req, res) => {
+  console.log('🔥 Seed endpoint hit!', req.body?.category);
+  const { data, category } = req.body;
+
+  if (!data || !Array.isArray(data)) {
+    return res.status(400).json({ error: 'Data array is required' });
+  }
+
+  if (!category) {
+    return res.status(400).json({ error: 'Category is required (e.g., "medical-terms", "procedures", etc.)' });
+  }
+
+  try {
+    const batch = admin.firestore().batch();
+    let count = 0;
+
+    data.forEach((item) => {
+      const docRef = admin.firestore()
+        .collection('conditions') //CHANGE
+        .doc(item.key_id);
+      
+      // Clean the data to avoid nested array issues
+      const cleanItem = {
+        ...item,
+        // Convert nested arrays/objects to JSON strings if they exist
+        icd10cm: item.icd10cm ? JSON.stringify(item.icd10cm) : null,
+        info_link_data: item.info_link_data ? JSON.stringify(item.info_link_data) : null,
+        synonyms: item.synonyms || [],
+        category: category,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+      
+      batch.set(docRef, cleanItem);
+      count++;
+    });
+
+    await batch.commit();
+    res.status(200).json({ 
+      success: true, 
+      message: `✅ ${count} items seeded successfully to category: ${category}` 
+    });
+  } catch (error) {
+    console.error('❌ Error seeding reference library:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
 
 
 
