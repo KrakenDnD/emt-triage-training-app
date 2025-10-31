@@ -571,6 +571,51 @@ function parseReview(content) {
   }
 }
 
+app.get('/seed-user-profiles', async (req, res) => {
+  try {
+    const usersSnapshot = await admin.firestore().collection('users').get();
+    const batch = admin.firestore().batch();
+
+    usersSnapshot.forEach((doc) => {
+      const userData = doc.data();
+      const userRef = admin.firestore().collection('users').doc(doc.id);
+      
+      if (userData.role === 'student') {
+        batch.update(userRef, {
+          firstName: '',
+          lastName: '',
+          displayId: '0000001',
+          completedScenarios: [],
+          avgScore: 0,
+          allergies: '',
+          avatar: '',
+          phoneNum: '',
+          dateOfBirth: '',
+          emergencyContact: '',
+          certifications: [],
+          instructorId: '',
+          instructorName: '',
+          classNum: '',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        studentCounter++;
+      } else if (userData.role === 'instructor') {
+        batch.update(userRef, {
+          assignedStudents: [],
+          avatar: '',
+          phoneNum: '',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+
+    await batch.commit();
+    res.status(200).send('User profiles seeded successfully.');
+  } catch (error) {
+    console.error('Error seeding profiles:', error);
+    res.status(500).send('Failed to seed user profiles.');
+  }
+});
 
 
 

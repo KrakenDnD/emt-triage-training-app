@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle, Clock, Users, AlertTriangle, Calendar, Award, TrendingUp } from 'lucide-react-native';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const fetchCompletedScenarios = async (userId) => {
   await new Promise(resolve => setTimeout(resolve, 500));
@@ -13,7 +15,7 @@ const fetchCompletedScenarios = async (userId) => {
       title: "Mark's Bad Day",
       description: "Mark's hat flew over a fence with a 'keep out' sign. He decided to go get it, not realizing that a rollercoaster was rocketing towards him. Tiffany's leg made contact with Mark's head. The leg won.",
       difficulty: 'Extreme',
-      completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+      completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       score: 95,
       timeSpent: '45 mins',
     },
@@ -22,7 +24,7 @@ const fetchCompletedScenarios = async (userId) => {
       title: "Waterpark Fiasco",
       description: "The Mendez family thought their day at the waterpark would be uneventful. Unfortunely, little timmy fell out of a hole in a waterslide, landing on his brother, johnny.",
       difficulty: 'Medium',
-      completedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+      completedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       score: 88,
       timeSpent: '32 mins',
     },
@@ -31,7 +33,7 @@ const fetchCompletedScenarios = async (userId) => {
       title: "Chris's Depressive Episode",
       description: "Chris had a particularly bad day at work after being told by his boss that he was a 'incompetent piece of trash'. He didn't feel safe alone after such an event, so he called 911.",
       difficulty: 'Easy',
-      completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+      completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
       score: 92,
       timeSpent: '28 mins',
     },
@@ -40,11 +42,32 @@ const fetchCompletedScenarios = async (userId) => {
       title: "Gladys's Day at the Beach",
       description: "Gladys's lost her phone at the beach! She accused the lifeguard of stealing it, who put her in a headlock for the accusation. An onlooker called 911 as the street fighter brawl occured.",
       difficulty: 'Easy',
-      completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week ago
+      completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       score: 85,
       timeSpent: '25 mins',
     },
   ];
+};
+
+const fetchUserProfile = async (userId) => {
+  const db = getFirestore();
+  
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    
+    if (!userDoc.exists()) {
+      throw new Error('User profile not found');
+    }
+    
+    const data = userDoc.data();
+    
+    return {
+      avgScore: data.avgScore || 0,
+    };
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
 };
 
 const getDifficultyColor = (difficulty) => {
@@ -139,10 +162,12 @@ const HistoryCard = ({ scenario, onPress }) => (
 
 const ScenarioHistory = ({ navigation, route }) => {
   const [scenarios, setScenarios] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const userId = route?.params?.userId || 'current-user-id';
+  const auth = getAuth();
+  const userId = auth.currentUser?.uid || route?.params?.userId || 'current-user-id';
 
   useEffect(() => {
     loadHistory();
@@ -152,8 +177,14 @@ const ScenarioHistory = ({ navigation, route }) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchCompletedScenarios(userId);
-      setScenarios(data);
+      
+      const [profileData, scenariosData] = await Promise.all([
+        fetchUserProfile(userId),
+        fetchCompletedScenarios(userId)
+      ]);
+      
+      setProfile(profileData);
+      setScenarios(scenariosData);
     } catch (err) {
       setError('Failed to load history');
       console.error('Error loading history:', err);
@@ -215,7 +246,7 @@ const ScenarioHistory = ({ navigation, route }) => {
                     <Text style={styles.statLabel}>Completed</Text>
                   </View>
                   <View style={styles.statCard}>
-                    <Text style={styles.statNumber}>{calculateAverageScore()}%</Text>
+                    <Text style={styles.statNumber}>{profile?.avgScore || 0}%</Text>
                     <Text style={styles.statLabel}>Avg Score</Text>
                   </View>
                 </View>
