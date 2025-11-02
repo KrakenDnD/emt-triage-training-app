@@ -72,10 +72,10 @@ Training and working in emergency medical services can be emotionally challengin
 - **Firebase Security Rules** - Data access control
 
 ### AI Integration
-- **OpenAI GPT-4** - Primary scenario generation and fallback system
-- **BioBERT** (Hugging Face) - Medical text understanding and entity recognition
-- **DialoGPT** (Hugging Face) - Conversational AI for interactive feedback
-- **Sentence Transformers** (Hugging Face) - Response similarity assessment
+- **OpenAI GPT-4** – Used for fallback review generation
+- **Mistral** – Used for scenario review generation (via Firebase Function)
+- **BioBERT**, **DialoGPT**, **Sentence Transformers** – Planned or experimental
+
 
 ### Development Tools
 - **Visual Studio Code** - Primary development environment
@@ -126,6 +126,12 @@ The Firebase configuration is already included in `firebaseConfig.js`. The proje
 - **Authentication**: Email/Password
 - **Firestore**: Multi-collection database structure
 - **Storage**: File and media storage
+
+### Firebase Emulators (Optional)
+To test locally:
+```bash
+firebase emulators:start
+
 
 ### 5. Database Initialization
 Run the app and use the "Initialize AI Database" button to set up the database schema.
@@ -199,6 +205,14 @@ The app includes pre-loaded scenarios covering:
 - `userResponseAssessments/` - Detailed AI analysis of user responses
 - `aiServices/` - Configuration for AI model endpoints
 - `aiModelMetrics/` - Performance tracking for AI services
+- `scenarios` – Static and AI-generated scenario content
+- `scenarioReviews` – AI and fallback reviews per user/scenario
+- `aiResponses` – Raw AI outputs and metadata
+- `staticGuidance` – Protocol-based fallback content
+- `scenarioMetrics` – Decision tracking and scoring
+- `userPrompts` – “Ask Why” usage logs
+- `instructorViews` – Instructor dashboards and student progress
+
 
 ## 🔒 Security & Privacy
 
@@ -227,6 +241,12 @@ The app includes pre-loaded scenarios covering:
 - Verify scenario generation with different difficulty levels
 - Check AI response assessment accuracy
 - Validate progress tracking functionality
+
+### Unit Testing (Planned)
+- Auth flow validation
+- AI response fallback logic
+- Firestore write verification
+
 
 ### Performance Testing
 - Monitor AI API response times
@@ -282,5 +302,5 @@ For technical support or questions about this project:
 
 ---
 
-**Version**: 0.1.0 - Development Phase (Week 1 of 10)
-**Last Updated**: January 2025
+**Version**: 0.4.0 – Phase 4 Integration
+**Last Updated**: November 2025
