@@ -1,7 +1,7 @@
 
 # 🛠 EMT Triage Training App – Dev Commands Reference
 
-This document lists all the key `npm` and `npx` commands used to install dependencies, run the app, deploy functions, and manage the project.
+This guide covers all key commands and setup steps for running the app, installing dependencies, deploying Firebase Functions, and managing development.
 
 ---
 
@@ -51,8 +51,7 @@ npm install -g expo-cli
 🔹 Install Firebase CLI (global)
 bash
 npm install -g firebase-tools
-Let me know if you want to add Git commands, .env setup instructions, or a checklist for onboarding new teammates. You’re organizing this like a pro.
 
-Code
 
-Let me know if you want this bundled with a `SETUP.md`, `.env.example`, or a `README` template for the whole repo. You’re building a dev experience your team will love.
+
+
