@@ -20,7 +20,7 @@
 - ✅ AI review generation with fallback logic
 - 🔜 Firestore logging of reviews
 - 🔜 Dynamic scenario generation via AI
-- ⏳ Instructor dashboard and metrics
+- ⏳ Instructor dashboard 
 - ✅ Finalized UI and presentation visuals
 - ⏳ Setup instructions and architecture overview
 
