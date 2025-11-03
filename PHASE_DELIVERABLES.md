@@ -23,4 +23,4 @@
 - ⏳ Instructor dashboard and metrics
 - ✅ Finalized UI and presentation visuals
 - ⏳ Setup instructions and architecture overview
-- ⏳ Unit tests for auth, AI, and decision logic
+
