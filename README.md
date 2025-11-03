@@ -1,4 +1,3 @@
-expo # EMT Triage Training App
 
 An AI-powered mobile application for Emergency Medical Technician (EMT) triage training, featuring interactive scenarios and intelligent assessment systems.
 
