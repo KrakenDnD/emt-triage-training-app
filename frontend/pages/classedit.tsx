@@ -15,6 +15,14 @@ export default function ClassEdit({ navigation }) {
     school: ''
   });
 
+  const getScoreColor = (score: string) => {
+    const numScore = parseInt(score);
+    if (numScore >= 85) return '#10b981';
+    if (numScore >= 70) return '#f59e0b';
+    return '#ef4444';
+  };
+
+
   const classes = ['Class #1', 'Class #2', 'Class #3', 'Class #4'];
 
   const [classData, setClassData] = useState({

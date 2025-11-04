@@ -601,9 +601,13 @@ app.get('/seed-user-profiles', async (req, res) => {
         studentCounter++;
       } else if (userData.role === 'instructor') {
         batch.update(userRef, {
+          classes:[],
           assignedStudents: [],
           avatar: '',
           phoneNum: '',
+          firstName: '',
+          lastName: '',
+          title: '',
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
       }

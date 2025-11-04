@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X, PartyPopper, NotebookPen } from 'lucide-react-native';
+import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X, PartyPopper, NotebookPen, Calendar } from 'lucide-react-native';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface ProfileDto {
   id?: string;
@@ -48,6 +49,21 @@ class ProfileService {
     }
 
     const data = userDoc.data();
+    
+    //fetch instructor name if instructorId exists
+    let instructorName = '';
+    if (data.instructorId) {
+      try {
+        const instructorDoc = await getDoc(doc(this.db, 'users', data.instructorId));
+        if (instructorDoc.exists()) {
+          const instructorData = instructorDoc.data();
+          instructorName = instructorData.fullName || 
+                          `${instructorData.firstName || ''} ${instructorData.lastName || ''}`.trim();
+        }
+      } catch (error) {
+        console.error('Failed to fetch instructor data:', error);
+      }
+    }
 
     return {
       id: userDoc.id,
@@ -59,7 +75,7 @@ class ProfileService {
       dateOfBirth: data.dateOfBirth || '',
       emergencyContact: data.emergencyContact || '',
       instructorId: data.instructorId || '',
-      instructorName: data.instructorName || '',
+      instructorName: instructorName,
       displayId: data.displayId || '',
       role: data.role || '',
       avgScore: data.avgScore || 0,
@@ -164,6 +180,9 @@ export default function StudentProfile({ navigation }) {
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
   const handleButtonPress = (route) => {
     try {
       navigation.navigate(route);
@@ -190,12 +209,62 @@ export default function StudentProfile({ navigation }) {
         dateOfBirth: data.dateOfBirth || '',
         emergencyContact: data.emergencyContact || '',
       });
+      
+      if (data.dateOfBirth) {
+        const parsedDate = parseDateString(data.dateOfBirth);
+        if (parsedDate) {
+          setSelectedDate(parsedDate);
+        }
+      }
     } catch (err) {
       console.error('Failed to load profile:', err);
       setError('Failed to load profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  //parse date string (MM/DD/YYYY) to date object
+  const parseDateString = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const month = parseInt(parts[0]) - 1; //month is 0-indexed
+      const day = parseInt(parts[1]);
+      const year = parseInt(parts[2]);
+      return new Date(year, month, day);
+    }
+    return null;
+  };
+
+  //format Date object to MM/DD/YYYY string
+  const formatDate = (date: Date): string => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  const handleDateChange = (event, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    
+    if (date) {
+      setSelectedDate(date);
+      setFormData({
+        ...formData,
+        dateOfBirth: formatDate(date)
+      });
+    }
+  };
+
+  const openDatePicker = () => {
+    setShowDatePicker(true);
+  };
+
+  const closeDatePicker = () => {
+    setShowDatePicker(false);
   };
 
   const saveProfile = async () => {
@@ -235,7 +304,17 @@ export default function StudentProfile({ navigation }) {
       dateOfBirth: profile.dateOfBirth || '',
       emergencyContact: profile.emergencyContact || '',
     });
+    
+    //reset date picker to original date
+    if (profile.dateOfBirth) {
+      const parsedDate = parseDateString(profile.dateOfBirth);
+      if (parsedDate) {
+        setSelectedDate(parsedDate);
+      }
+    }
+    
     setIsEditingProfile(false);
+    setShowDatePicker(false);
   };
 
   const getAvatarSource = () => {
@@ -392,14 +471,57 @@ export default function StudentProfile({ navigation }) {
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Date of Birth</Text>
               {isEditingProfile ? (
-                <TextInput
-                  value={formData.dateOfBirth}
-                  onChangeText={(text) => setFormData({...formData, dateOfBirth: text})}
-                  placeholder="MM/DD/YYYY"
-                  placeholderTextColor="#94a3b8"
-                  style={styles.input}
-                  editable={!isSaving}
-                />
+                <>
+                  <TouchableOpacity
+                    onPress={openDatePicker}
+                    style={styles.datePickerButton}
+                    disabled={isSaving}
+                  >
+                    <Calendar color="#2563eb" size={20} />
+                    <Text style={styles.datePickerButtonText}>
+                      {formData.dateOfBirth || 'Select Date'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* iOS Modal Picker */}
+                  {Platform.OS === 'ios' && showDatePicker && (
+                    <Modal
+                      transparent={true}
+                      animationType="slide"
+                      visible={showDatePicker}
+                      onRequestClose={closeDatePicker}
+                    >
+                      <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                          <View style={styles.modalHeader}>
+                            <TouchableOpacity onPress={closeDatePicker}>
+                              <Text style={styles.modalDoneButton}>Done</Text>
+                            </TouchableOpacity>
+                          </View>
+                          <DateTimePicker
+                            value={selectedDate}
+                            mode="date"
+                            display="spinner"
+                            onChange={handleDateChange}
+                            maximumDate={new Date()}
+                            textColor="#000000"
+                          />
+                        </View>
+                      </View>
+                    </Modal>
+                  )}
+
+                  {/* Android Inline Picker */}
+                  {Platform.OS === 'android' && showDatePicker && (
+                    <DateTimePicker
+                      value={selectedDate}
+                      mode="date"
+                      display="default"
+                      onChange={handleDateChange}
+                      maximumDate={new Date()}
+                    />
+                  )}
+                </>
               ) : (
                 <Text style={styles.fieldValue}>{formData.dateOfBirth || 'Not provided'}</Text>
               )}
@@ -722,6 +844,44 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     color: '#0f172a',
+  },
+  datePickerButton: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  datePickerButtonText: {
+    fontSize: 16,
+    color: '#0f172a',
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  modalDoneButton: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#2563eb',
   },
   textArea: {
     minHeight: 80,
