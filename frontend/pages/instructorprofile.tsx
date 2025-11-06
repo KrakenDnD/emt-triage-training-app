@@ -1,12 +1,59 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GraduationCap, Users, BookOpen, Send } from 'lucide-react-native';
+import { GraduationCap, Users, BookOpen, Send, Edit2, X, Check } from 'lucide-react-native';
+import { auth, db } from '../firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+
+const NavigationButton = ({ title, onPress }) => (
+  <TouchableOpacity style={styles.navButton} onPress={onPress}>
+    <View style={styles.navButtonContent}>
+      <Text style={styles.navButtonText}>{title}</Text>
+      <Text style={styles.navButtonArrow}>→</Text>
+    </View>
+  </TouchableOpacity>
+);
+
+const ClassButton = ({ className, isSelected, onPress }) => (
+  <TouchableOpacity
+    style={[
+      styles.classButton,
+      isSelected && styles.classButtonSelected
+    ]}
+    onPress={onPress}
+  >
+    <Text style={[
+      styles.classButtonText,
+      isSelected && styles.classButtonTextSelected
+    ]}>
+      {className}
+    </Text>
+  </TouchableOpacity>
+);
+
+const PrimaryButton = ({ title, icon: Icon, onPress }) => (
+  <TouchableOpacity style={styles.saveButton} onPress={onPress}>
+    {Icon && <Icon color="#ffffff" size={18} />}
+    <Text style={styles.saveButtonText}>{title}</Text>
+  </TouchableOpacity>
+);
 
 export default function InstructorProfile({ navigation }) {
   const [selectedClass, setSelectedClass] = useState('Class #1');
   const [homeworkText, setHomeworkText] = useState('');
+  const [userProfile, setUserProfile] = useState({
+    firstName: '',
+    lastName: '',
+    title: ''
+  });
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({
+    firstName: '',
+    lastName: '',
+    title: ''
+  });
+  const [loading, setLoading] = useState(true);
 
   const classes = ['Class #1', 'Class #2', 'Class #3', 'Class #4'];
 
@@ -85,6 +132,65 @@ export default function InstructorProfile({ navigation }) {
 
   const maxScore = Math.max(...analyticsData.map(d => d.score));
 
+  // Fetch user profile data from Firebase on component mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const user = auth.currentUser;
+      
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUserProfile({
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            title: data.title || 'EMT Instructor'
+          });
+        }
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      Alert.alert('Error', 'Failed to load profile information');
+      setLoading(false);
+    }
+  };
+
+  const handleEditPress = () => {
+    setEditedProfile({
+      firstName: userProfile.firstName,
+      lastName: userProfile.lastName,
+      title: userProfile.title
+    });
+    setEditModalVisible(true);
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const user = auth.currentUser;
+      
+      if (user) {
+        await updateDoc(doc(db, 'users', user.uid), {
+          firstName: editedProfile.firstName,
+          lastName: editedProfile.lastName,
+          title: editedProfile.title
+        });
+
+        setUserProfile(editedProfile);
+        setEditModalVisible(false);
+        Alert.alert('Success', 'Profile updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', 'Failed to update profile');
+    }
+  };
+
   const handleSaveHomework = () => {
     if (homeworkText.length > 0) {
       alert(`Homework saved for ${selectedClass}: "${homeworkText}"`);
@@ -94,13 +200,13 @@ export default function InstructorProfile({ navigation }) {
     }
   };
   
- const handleButtonPress = (route) => {
+  const handleButtonPress = (route) => {
     try {
       navigation.navigate(route);
     } catch (error) {
       console.error('Navigation error:', error);
     }
- }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -108,7 +214,7 @@ export default function InstructorProfile({ navigation }) {
         <ScrollView>
           <View style={styles.header}>
             <View style={styles.headerContent}>
-              {/* Empty view for spacing, can add edit button later if needed */}
+              {/* Empty view for spacing */}
             </View>
           </View>
 
@@ -120,12 +226,18 @@ export default function InstructorProfile({ navigation }) {
                   <Image source={require('../assets/metalmario.png')} style={styles.avatar} />
                 </View>
                 <View style={styles.nameSection}>
-                  <Text style={styles.nameText}>Professor Patel</Text>
+                  <Text style={styles.titleText}>{userProfile.title}</Text>
+                  <Text style={styles.nameText}>
+                    {userProfile.firstName} {userProfile.lastName}
+                  </Text>
                   <View style={styles.roleContainer}>
                     <GraduationCap color="#64748b" size={16} />
-                    <Text style={styles.roleText}>EMT Instructor</Text>
+                    <Text style={styles.roleText}>Instructor</Text>
                   </View>
                 </View>
+                <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
+                  <Edit2 color="#2563eb" size={20} />
+                </TouchableOpacity>
               </View>
 
               {/* Class Selector */}
@@ -133,21 +245,12 @@ export default function InstructorProfile({ navigation }) {
                 <Text style={styles.classSectionTitle}>Select Class</Text>
                 <View style={styles.classSelector}>
                   {classes.map((className) => (
-                    <TouchableOpacity
+                    <ClassButton
                       key={className}
-                      style={[
-                        styles.classButton,
-                        selectedClass === className && styles.classButtonSelected
-                      ]}
+                      className={className}
+                      isSelected={selectedClass === className}
                       onPress={() => setSelectedClass(className)}
-                    >
-                      <Text style={[
-                        styles.classButtonText,
-                        selectedClass === className && styles.classButtonTextSelected
-                      ]}>
-                        {className}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ))}
                 </View>
               </View>
@@ -156,6 +259,7 @@ export default function InstructorProfile({ navigation }) {
             {/* Analytics Card */}
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Class Performance Analytics</Text>
+              
               <View style={styles.chartContainer}>
                 {analyticsData.map((item, index) => (
                   <View key={index} style={styles.chartItem}>
@@ -234,44 +338,108 @@ export default function InstructorProfile({ navigation }) {
                 onChangeText={setHomeworkText}
               />
               
-              <TouchableOpacity 
-                style={styles.saveButton} 
+              <PrimaryButton
+                title="Save & Send to Class"
+                icon={Send}
                 onPress={handleSaveHomework}
-              >
-                <Send color="#ffffff" size={18} />
-                <Text style={styles.saveButtonText}>Save & Send to Class</Text>
-              </TouchableOpacity>
+              />
             </View>
           
-        {/* Navigation Section */}
-          <View style={styles.navigationSection}>
-            <Text style={styles.navigationTitle}>Quick Actions</Text>
-            
-            <TouchableOpacity 
-              style={styles.navButton}
-              onPress={() => handleButtonPress('ScenarioSelect')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Edit Class Roster</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            {/* Navigation Section */}
+            <View style={styles.navigationSection}>
+              <Text style={styles.navigationTitle}>Quick Actions</Text>
+              
+              <NavigationButton
+                title="Edit Class Roster"
+                onPress={() => handleButtonPress('ClassEdit')}
+              />
 
-            <TouchableOpacity 
-              style={styles.navButton}
-              onPress={() => handleButtonPress('CustomizeAI')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Create Custom Scenarios</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+              <NavigationButton
+                title="See Student Progress"
+                onPress={() => handleButtonPress('InstructorProgress')}
+              />
+
+              <NavigationButton
+                title="Create Custom Scenarios"
+                onPress={() => handleButtonPress('CustomizeAI')}
+              />
             </View>
-            </View>
+          </View>
 
           <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
         </ScrollView>
       </LinearGradient>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                <X color="#64748b" size={24} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Title</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={editedProfile.title}
+                  onChangeText={(text) => setEditedProfile({ ...editedProfile, title: text })}
+                  placeholder="e.g., EMT Instructor"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>First Name</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={editedProfile.firstName}
+                  onChangeText={(text) => setEditedProfile({ ...editedProfile, firstName: text })}
+                  placeholder="First Name"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Last Name</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={editedProfile.lastName}
+                  onChangeText={(text) => setEditedProfile({ ...editedProfile, lastName: text })}
+                  placeholder="Last Name"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity 
+                style={styles.modalCancelButton}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalSaveButton}
+                onPress={handleSaveProfile}
+              >
+                <Check color="#ffffff" size={18} />
+                <Text style={styles.modalSaveText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -363,6 +531,12 @@ const styles = StyleSheet.create({
   nameSection: {
     flex: 1,
   },
+  titleText: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
   nameText: {
     fontSize: 24,
     fontWeight: '700',
@@ -378,6 +552,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     fontWeight: '500',
+  },
+  editButton: {
+    padding: 8,
+    backgroundColor: '#eff6ff',
+    borderRadius: 8,
   },
   classSection: {
     marginTop: 8,
@@ -586,5 +765,92 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 32,
     marginBottom: 40,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 8,
+  },
+  modalInput: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    color: '#0f172a',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  modalSaveButton: {
+    flex: 1,
+    flexDirection: 'row',
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  modalSaveText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });

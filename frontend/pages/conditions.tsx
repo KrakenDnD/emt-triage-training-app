@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, TextInput, ActivityIndicator } from 'react-native';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
 export default function MedicalConditions({ navigation, route }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -8,26 +9,43 @@ export default function MedicalConditions({ navigation, route }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        //check if data was passed from navigation
-        if (route?.params?.preloadedData) {
-          setConditionData(route.params.preloadedData);
-          setIsLoading(false);
-        } else {
-          //load data for the first time
-          const data = require('../assets/medicalconditions.json');
-          setConditionData(data);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('Error loading medical data:', error);
-        setIsLoading(false);
-      }
-    };
-    
-    loadData();
-  }, [route?.params?.preloadedData]);
+    loadDataFromFirestore();
+  }, []);
+
+  const loadDataFromFirestore = async () => {
+    try {
+      setIsLoading(true);
+      const db = getFirestore();
+      
+      //query the conditions collection
+      const conditionsRef = collection(db, 'conditions');
+      const querySnapshot = await getDocs(conditionsRef);
+      
+      const data = [];
+      querySnapshot.forEach((doc) => {
+        const docData = doc.data();
+        
+        //parse JSON strings back to objects/arrays, since it had to be truncated for the db
+        const item = {
+          ...docData,
+          icd10cm: docData.icd10cm ? JSON.parse(docData.icd10cm) : [],
+          info_link_data: docData.info_link_data ? JSON.parse(docData.info_link_data) : [],
+          synonyms: docData.synonyms || [],
+        };
+        
+        data.push(item);
+      });
+      
+      //sort alphabetically by primary_name
+      data.sort((a, b) => a.primary_name.localeCompare(b.primary_name));
+      
+      setConditionData(data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading medical data from Firestore:', error);
+      setIsLoading(false);
+    }
+  };
 
   const toggleExpand = (index) => {
     setExpandedItems(prev => ({
@@ -140,10 +158,22 @@ export default function MedicalConditions({ navigation, route }) {
                               )}
                               {item.icd10cm_codes && item.icd10cm_codes.length > 0 && (
                                 <Text style={styles.codeText}>
-                                  ICD-10: {item.icd10cm_codes.join(', ')}
+                                  ICD-10: {item.icd10cm_codes}
                                 </Text>
                               )}
                             </View>
+
+                            {/* ICD-10 Details */}
+                            {item.icd10cm && item.icd10cm.length > 0 && (
+                              <View style={styles.section}>
+                                <Text style={styles.sectionLabel}>ICD-10 Details:</Text>
+                                {item.icd10cm.map((code, i) => (
+                                  <Text key={i} style={styles.codeText}>
+                                    {code.code}: {code.name}
+                                  </Text>
+                                ))}
+                              </View>
+                            )}
 
                             {/* Synonyms */}
                             {item.synonyms && item.synonyms.length > 0 && (

@@ -4,6 +4,32 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BookOpen, Heart, Users, Clipboard, Pill, BookMarked, ChevronRight } from 'lucide-react-native';
 
+const ReferenceCard = ({ 
+  title, 
+  description, 
+  icon: Icon, 
+  iconColor, 
+  iconBackgroundColor, 
+  onPress 
+}) => (
+  <TouchableOpacity 
+    style={styles.card}
+    activeOpacity={0.7}
+    onPress={onPress}
+  >
+    <View style={styles.cardHeader}>
+      <View style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}>
+        <Icon color={iconColor} size={24} />
+      </View>
+      <View style={styles.cardTitleContainer}>
+        <Text style={styles.cardTitle}>{title}</Text>
+      </View>
+      <ChevronRight color="#cbd5e1" size={24} />
+    </View>
+    <Text style={styles.cardDescription}>{description}</Text>
+  </TouchableOpacity>
+);
+
 const ReferenceLibrary = ({ navigation }) => {
   const handleSectionPress = (route) => {
     try {
@@ -11,6 +37,13 @@ const ReferenceLibrary = ({ navigation }) => {
     } catch (error) {
       console.error('Navigation error:', error);
     }
+  };
+
+  const handleMedicalConditionsPress = () => {
+    navigation.navigate('Loading');
+    setTimeout(() => {
+      navigation.replace('Conditions');
+    }, 500);
   };
 
   return (
@@ -23,129 +56,59 @@ const ReferenceLibrary = ({ navigation }) => {
           </View>
 
           <View style={styles.content}>
-            {/* Medical Conditions Guide */}
-            <TouchableOpacity 
-                style={styles.card}
-                onPress={() => {
-                  navigation.navigate('Loading');
-                  setTimeout(() => {
-                    navigation.replace('Conditions');
-                  }, 500); //delay to actually show loading
-                }}
-              >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: '#2563eb15' }]}>
-                  <BookOpen color="#2563eb" size={24} />
-                </View>
-                <View style={styles.cardTitleContainer}>
-                  <Text style={styles.cardTitle}>Medical Conditions Guide</Text>
-                </View>
-                <ChevronRight color="#cbd5e1" size={24} />
-              </View>
-              <Text style={styles.cardDescription}>
-                Quickly reference the START and JumpSTART triage systems to prioritize patients effectively during mass casualty incidents. Built for speed and accuracy in chaotic environments.
-              </Text>
-            </TouchableOpacity>
-          
-            {/* Mental Health & Wellness */}
-            <TouchableOpacity
-              style={styles.card}
-              activeOpacity={0.7}
-              onPress={() => handleSectionPress('Home')}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: '#ec489915' }]}>
-                  <Heart color="#ec4899" size={24} />
-                </View>
-                <View style={styles.cardTitleContainer}>
-                  <Text style={styles.cardTitle}>Mental Health & Wellness</Text>
-                </View>
-                <ChevronRight color="#cbd5e1" size={24} />
-              </View>
-              <Text style={styles.cardDescription}>
-                Training and working in emergency medical services can be emotionally challenging. If you or someone you know needs support, click here.
-              </Text>
-            </TouchableOpacity>
+            <ReferenceCard
+              title="Medical Conditions Guide"
+              description="Quickly reference the START and JumpSTART triage systems to prioritize patients effectively during mass casualty incidents. Built for speed and accuracy in chaotic environments."
+              icon={BookOpen}
+              iconColor="#2563eb"
+              iconBackgroundColor="#2563eb15"
+              onPress={handleMedicalConditionsPress}
+            />
 
-            {/* Triage Protocols */}
-            <TouchableOpacity
-              style={styles.card}
-              activeOpacity={0.7}
+            <ReferenceCard
+              title="Mental Health & Wellness"
+              description="Training and working in emergency medical services can be emotionally challenging. If you or someone you know needs support, click here."
+              icon={Heart}
+              iconColor="#ec4899"
+              iconBackgroundColor="#ec489915"
               onPress={() => handleSectionPress('Home')}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: '#8b5cf615' }]}>
-                  <Users color="#8b5cf6" size={24} />
-                </View>
-                <View style={styles.cardTitleContainer}>
-                  <Text style={styles.cardTitle}>Triage Protocols</Text>
-                </View>
-                <ChevronRight color="#cbd5e1" size={24} />
-              </View>
-              <Text style={styles.cardDescription}>
-                Quickly reference the START and JumpSTART triage systems to prioritize patients effectively during mass casualty incidents. Built for speed and accuracy in chaotic environments.
-              </Text>
-            </TouchableOpacity>
+            />
 
-            {/* Medical Procedures Reference */}
-            <TouchableOpacity
-              style={styles.card}
-              activeOpacity={0.7}
+            <ReferenceCard
+              title="Triage Protocols"
+              description="Quickly reference the START and JumpSTART triage systems to prioritize patients effectively during mass casualty incidents. Built for speed and accuracy in chaotic environments."
+              icon={Users}
+              iconColor="#8b5cf6"
+              iconBackgroundColor="#8b5cf615"
               onPress={() => handleSectionPress('Home')}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: '#10b98115' }]}>
-                  <Clipboard color="#10b981" size={24} />
-                </View>
-                <View style={styles.cardTitleContainer}>
-                  <Text style={styles.cardTitle}>Medical Procedures Reference</Text>
-                </View>
-                <ChevronRight color="#cbd5e1" size={24} />
-              </View>
-              <Text style={styles.cardDescription}>
-                Step-by-step guides to common prehospital procedures—ideal for review, practice, quick checks in the field or during simulations.
-              </Text>
-            </TouchableOpacity>
+            />
 
-            {/* Emergency Medications Guide */}
-            <TouchableOpacity
-              style={styles.card}
-              activeOpacity={0.7}
+            <ReferenceCard
+              title="Medical Procedures Reference"
+              description="Step-by-step guides to common prehospital procedures—ideal for review, practice, quick checks in the field or during simulations."
+              icon={Clipboard}
+              iconColor="#10b981"
+              iconBackgroundColor="#10b98115"
               onPress={() => handleSectionPress('Home')}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: '#f59e0b15' }]}>
-                  <Pill color="#f59e0b" size={24} />
-                </View>
-                <View style={styles.cardTitleContainer}>
-                  <Text style={styles.cardTitle}>Emergency Medications Guide</Text>
-                </View>
-                <ChevronRight color="#cbd5e1" size={24} />
-              </View>
-              <Text style={styles.cardDescription}>
-                An at-a-glance reference for commonly used EMS medications, including indications, dosages, contraindications, and side effects—made for fast, informed decisions.
-              </Text>
-            </TouchableOpacity>
+            />
 
-            {/* Glossary of Terms */}
-            <TouchableOpacity
-              style={styles.card}
-              activeOpacity={0.7}
+            <ReferenceCard
+              title="Emergency Medications Guide"
+              description="An at-a-glance reference for commonly used EMS medications, including indications, dosages, contraindications, and side effects—made for fast, informed decisions."
+              icon={Pill}
+              iconColor="#f59e0b"
+              iconBackgroundColor="#f59e0b15"
+              onPress={() => handleSectionPress('Home')}
+            />
+
+            <ReferenceCard
+              title="Glossary of Terms"
+              description="Look up key EMS terms, acronyms, and concepts to build your vocabulary and deepen your understanding of emergency medical care."
+              icon={BookMarked}
+              iconColor="#06b6d4"
+              iconBackgroundColor="#06b6d415"
               onPress={() => handleSectionPress('Glossary')}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: '#06b6d415' }]}>
-                  <BookMarked color="#06b6d4" size={24} />
-                </View>
-                <View style={styles.cardTitleContainer}>
-                  <Text style={styles.cardTitle}>Glossary of Terms</Text>
-                </View>
-                <ChevronRight color="#cbd5e1" size={24} />
-              </View>
-              <Text style={styles.cardDescription}>
-                Look up key EMS terms, acronyms, and concepts to build your vocabulary and deepen your understanding of emergency medical care.
-              </Text>
-            </TouchableOpacity>
+            />
           </View>
 
           <Text style={styles.footer}>Developed by CodeBlue Collective</Text>

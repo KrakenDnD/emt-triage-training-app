@@ -1,93 +1,176 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X } from 'lucide-react-native';
+import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X, PartyPopper, NotebookPen, Calendar } from 'lucide-react-native';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface ProfileDto {
   id?: string;
   firstName?: string;
   lastName?: string;
+  fullName?: string;
   avatarUrl?: string;
   email?: string;
-  phoneNumber?: string;
-  allergies?: string;
-  medicalConditions?: string;
+  phoneNum?: string;
+  dateOfBirth?: string;
   emergencyContact?: string;
-  instructor?: string;
-  classNumber?: string;
+  instructorId?: string;
+  instructorName?: string;
+  displayId?: string;
+  role?: string;
+  avgScore: number;
+  profilePhoto?: string;
 }
 
 interface UpdateProfileDto {
-  firstName?: string;
-  lastName?: string;
-  avatarUrl?: string;
-  phoneNumber?: string;
-  allergies?: string;
-  medicalConditions?: string;
+  phoneNum?: string;
+  dateOfBirth?: string;
   emergencyContact?: string;
+  profilePhoto?: string;
 }
 
 class ProfileService {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = process.env.EXPO_PUBLIC_API_URL || 'https://api.example.com') {
-    this.baseUrl = baseUrl;
-  }
+  private db = getFirestore();
+  private auth = getAuth();
 
   async getMyProfile(): Promise<ProfileDto> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: '1',
-          firstName: 'Hatsune',
-          lastName: 'Miku',
-          email: 'hatsune.miku@example.edu',
-          phoneNumber: '(555) 123-4567',
-          allergies: 'Penicillin, Latex',
-          medicalConditions: 'None',
-          emergencyContact: 'Jane Doe - (555) 987-6543',
-          instructor: 'Professor Patel',
-          classNumber: '3',
-          avatarUrl: undefined,
-        });
-      }, 500);
-    });
+    const currentUser = this.auth.currentUser;
+    if (!currentUser) {
+      throw new Error('No user logged in');
+    }
+
+    const userDoc = await getDoc(doc(this.db, 'users', currentUser.uid));
+    
+    if (!userDoc.exists()) {
+      throw new Error('User profile not found');
+    }
+
+    const data = userDoc.data();
+    
+    //fetch instructor name if instructorId exists
+    let instructorName = '';
+    if (data.instructorId) {
+      try {
+        const instructorDoc = await getDoc(doc(this.db, 'users', data.instructorId));
+        if (instructorDoc.exists()) {
+          const instructorData = instructorDoc.data();
+          instructorName = instructorData.fullName || 
+                          `${instructorData.firstName || ''} ${instructorData.lastName || ''}`.trim();
+        }
+      } catch (error) {
+        console.error('Failed to fetch instructor data:', error);
+      }
+    }
+
+    return {
+      id: userDoc.id,
+      firstName: data.firstName || '',
+      lastName: data.lastName || '',
+      fullName: data.fullName,
+      email: data.email,
+      phoneNum: data.phoneNum || '',
+      dateOfBirth: data.dateOfBirth || '',
+      emergencyContact: data.emergencyContact || '',
+      instructorId: data.instructorId || '',
+      instructorName: instructorName,
+      displayId: data.displayId || '',
+      role: data.role || '',
+      avgScore: data.avgScore || 0,
+      profilePhoto: data.profilePhoto || '',
+      avatarUrl: data.profilePhoto || '',
+    };
   }
 
   async updateMyProfile(data: UpdateProfileDto): Promise<ProfileDto> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: '1',
-          instructor: 'Professor Patel',
-          classNumber: '3',
-          email: 'hatsune.miku@example.edu',
-          ...data,
-        });
-      }, 500);
-    });
-  }
+    const currentUser = this.auth.currentUser;
+    if (!currentUser) {
+      throw new Error('No user logged in');
+    }
 
-  async uploadAvatar(imageUri: string): Promise<string> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(imageUri);
-      }, 500);
+    const userRef = doc(this.db, 'users', currentUser.uid);
+    await updateDoc(userRef, {
+      ...data,
+      updatedAt: new Date()
     });
+
+    return this.getMyProfile();
   }
 }
+
+const getScoreColor = (score: number) => {
+  if (score >= 85) return '#10b981';
+  if (score >= 70) return '#f59e0b';
+  return '#ef4444';
+};
+
+const getScoreIcon = (score: number) => {
+  if (score >= 85) return PartyPopper;
+  if (score >= 70) return NotebookPen;
+  return AlertCircle;
+};
+
+const NavigationButton = ({ title, onPress }) => (
+  <TouchableOpacity style={styles.navButton} onPress={onPress}>
+    <View style={styles.navButtonContent}>
+      <Text style={styles.navButtonText}>{title}</Text>
+      <Text style={styles.navButtonArrow}>→</Text>
+    </View>
+  </TouchableOpacity>
+);
+
+const ActionButton = ({ 
+  title, 
+  onPress, 
+  icon: Icon, 
+  variant = 'primary', 
+  disabled = false,
+  isLoading = false 
+}) => {
+  const isPrimary = variant === 'primary';
+  
+  return (
+    <TouchableOpacity
+      style={[
+        styles.actionButton,
+        isPrimary ? styles.saveButton : styles.cancelButton,
+        disabled && styles.buttonDisabled
+      ]}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      {isLoading ? (
+        <ActivityIndicator size="small" color={isPrimary ? '#fff' : '#64748b'} />
+      ) : (
+        <>
+          {Icon && <Icon color={isPrimary ? '#ffffff' : '#64748b'} size={20} />}
+          <Text style={isPrimary ? styles.saveButtonText : styles.cancelButtonText}>
+            {title}
+          </Text>
+        </>
+      )}
+    </TouchableOpacity>
+  );
+};
+
+const IconButton = ({ icon: Icon, onPress, style }) => (
+  <TouchableOpacity 
+    onPress={onPress}
+    style={[styles.editIconButton, style]}
+  >
+    <Icon color="#2563eb" size={20} />
+  </TouchableOpacity>
+);
   
 const profileService = new ProfileService();
 
 export default function StudentProfile({ navigation }) {
   const [profile, setProfile] = useState<ProfileDto>({});
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    allergies: '',
-    medicalConditions: '',
+    phoneNum: '',
+    dateOfBirth: '',
     emergencyContact: '',
   });
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
@@ -96,6 +179,9 @@ export default function StudentProfile({ navigation }) {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const handleButtonPress = (route) => {
     try {
@@ -119,37 +205,76 @@ export default function StudentProfile({ navigation }) {
       const data = await profileService.getMyProfile();
       setProfile(data);
       setFormData({
-        firstName: data.firstName || '',
-        lastName: data.lastName || '',
-        phoneNumber: data.phoneNumber || '',
-        allergies: data.allergies || '',
-        medicalConditions: data.medicalConditions || '',
+        phoneNum: data.phoneNum || '',
+        dateOfBirth: data.dateOfBirth || '',
         emergencyContact: data.emergencyContact || '',
       });
+      
+      if (data.dateOfBirth) {
+        const parsedDate = parseDateString(data.dateOfBirth);
+        if (parsedDate) {
+          setSelectedDate(parsedDate);
+        }
+      }
     } catch (err) {
       console.error('Failed to load profile:', err);
-      setError('Failed to load profile. Using default values.');
+      setError('Failed to load profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveProfile = async () => {
-    if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      Alert.alert('Validation Error', 'First name and last name are required.');
-      return;
+  //parse date string (MM/DD/YYYY) to date object
+  const parseDateString = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const month = parseInt(parts[0]) - 1; //month is 0-indexed
+      const day = parseInt(parts[1]);
+      const year = parseInt(parts[2]);
+      return new Date(year, month, day);
     }
+    return null;
+  };
 
+  //format Date object to MM/DD/YYYY string
+  const formatDate = (date: Date): string => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  const handleDateChange = (event, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    
+    if (date) {
+      setSelectedDate(date);
+      setFormData({
+        ...formData,
+        dateOfBirth: formatDate(date)
+      });
+    }
+  };
+
+  const openDatePicker = () => {
+    setShowDatePicker(true);
+  };
+
+  const closeDatePicker = () => {
+    setShowDatePicker(false);
+  };
+
+  const saveProfile = async () => {
     setIsSaving(true);
     setError(null);
 
     try {
       const updateData: UpdateProfileDto = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        phoneNumber: formData.phoneNumber.trim(),
-        allergies: formData.allergies.trim(),
-        medicalConditions: formData.medicalConditions.trim(),
+        phoneNum: formData.phoneNum.trim(),
+        dateOfBirth: formData.dateOfBirth.trim(),
         emergencyContact: formData.emergencyContact.trim(),
       };
 
@@ -157,11 +282,8 @@ export default function StudentProfile({ navigation }) {
       
       setProfile(updatedProfile);
       setFormData({
-        firstName: updatedProfile.firstName || '',
-        lastName: updatedProfile.lastName || '',
-        phoneNumber: updatedProfile.phoneNumber || '',
-        allergies: updatedProfile.allergies || '',
-        medicalConditions: updatedProfile.medicalConditions || '',
+        phoneNum: updatedProfile.phoneNum || '',
+        dateOfBirth: updatedProfile.dateOfBirth || '',
         emergencyContact: updatedProfile.emergencyContact || '',
       });
       setIsEditingProfile(false);
@@ -178,22 +300,29 @@ export default function StudentProfile({ navigation }) {
 
   const cancelEdit = () => {
     setFormData({
-      firstName: profile.firstName || '',
-      lastName: profile.lastName || '',
-      phoneNumber: profile.phoneNumber || '',
-      allergies: profile.allergies || '',
-      medicalConditions: profile.medicalConditions || '',
+      phoneNum: profile.phoneNum || '',
+      dateOfBirth: profile.dateOfBirth || '',
       emergencyContact: profile.emergencyContact || '',
     });
+    
+    //reset date picker to original date
+    if (profile.dateOfBirth) {
+      const parsedDate = parseDateString(profile.dateOfBirth);
+      if (parsedDate) {
+        setSelectedDate(parsedDate);
+      }
+    }
+    
     setIsEditingProfile(false);
+    setShowDatePicker(false);
   };
 
   const getAvatarSource = () => {
     if (localAvatarUri) {
       return { uri: localAvatarUri };
     }
-    if (profile.avatarUrl) {
-      return { uri: profile.avatarUrl };
+    if (profile.profilePhoto) {
+      return { uri: profile.profilePhoto };
     }
     return defaultAvatar;
   };
@@ -211,20 +340,15 @@ export default function StudentProfile({ navigation }) {
     );
   }
 
+  const scoreColor = getScoreColor(profile.avgScore || 0);
+  const ScoreIcon = getScoreIcon(profile.avgScore || 0);
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
         <ScrollView>
           <View style={styles.header}>
             <View style={styles.headerContent}>
-              {!isEditingProfile && (
-                <TouchableOpacity 
-                  onPress={() => setIsEditingProfile(true)}
-                  style={styles.editIconButton}
-                >
-                  <Edit3 color="#ffffff" size={20} />
-                </TouchableOpacity>
-              )}
             </View>
           </View>
 
@@ -249,7 +373,7 @@ export default function StudentProfile({ navigation }) {
               </View>
               <View style={styles.nameSection}>
                 <Text style={styles.nameText}>
-                  {formData.firstName || 'First'} {formData.lastName || 'Last'}
+                  {profile.firstName || 'First'} {profile.lastName || 'Last'}
                 </Text>
                 <View style={styles.roleContainer}>
                   <GraduationCap color="#64748b" size={16} />
@@ -266,7 +390,7 @@ export default function StudentProfile({ navigation }) {
                 </View>
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Instructor</Text>
-                  <Text style={styles.infoValue}>{profile.instructor || 'Not assigned'}</Text>
+                  <Text style={styles.infoValue}>{profile.instructorName || 'Not assigned'}</Text>
                 </View>
               </View>
 
@@ -275,8 +399,8 @@ export default function StudentProfile({ navigation }) {
                   <Hash color="#2563eb" size={18} />
                 </View>
                 <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Class Number</Text>
-                  <Text style={styles.infoValue}>{profile.classNumber || 'Not assigned'}</Text>
+                  <Text style={styles.infoLabel}>Student ID</Text>
+                  <Text style={styles.infoValue}>{profile.displayId || 'Not assigned'}</Text>
                 </View>
               </View>
 
@@ -292,48 +416,47 @@ export default function StudentProfile({ navigation }) {
             </View>
           </View>
 
+          {/* Score Card */}
+          <View style={styles.scoreCard}>
+            <Text style={styles.scoreLabel}>Overall Score</Text>
+            <View style={styles.scoreContainer}>
+              <View style={styles.scoreIconLeft}>
+                <ScoreIcon color={scoreColor} size={32} />
+              </View>
+              <Text style={[styles.scoreValue, { color: scoreColor }]}>
+                {profile.avgScore || 0}
+              </Text>
+              <View style={styles.scoreIconRight}>
+                <ScoreIcon color={scoreColor} size={32} />
+              </View>
+            </View>
+            <TouchableOpacity 
+              style={styles.viewMoreButton}
+              onPress={() => handleButtonPress('History')}
+            >
+              <Text style={styles.viewMoreText}>View More</Text>
+              <Text style={styles.viewMoreArrow}>→</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Editable Information Card */}
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
+            <View style={styles.cardHeader}>
+              <Text style={styles.sectionTitle}>Personal Information</Text>
+              {!isEditingProfile && (
+                <IconButton 
+                  icon={Edit3}
+                  onPress={() => setIsEditingProfile(true)}
+                />
+              )}
+            </View>
             
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>First Name *</Text>
-              {isEditingProfile ? (
-                <TextInput
-                  value={formData.firstName}
-                  onChangeText={(text) => setFormData({...formData, firstName: text})}
-                  placeholder="Enter first name"
-                  placeholderTextColor="#94a3b8"
-                  style={styles.input}
-                  editable={!isSaving}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{formData.firstName || 'Not provided'}</Text>
-              )}
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Last Name *</Text>
-              {isEditingProfile ? (
-                <TextInput
-                  value={formData.lastName}
-                  onChangeText={(text) => setFormData({...formData, lastName: text})}
-                  placeholder="Enter last name"
-                  placeholderTextColor="#94a3b8"
-                  style={styles.input}
-                  editable={!isSaving}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{formData.lastName || 'Not provided'}</Text>
-              )}
-            </View>
-
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Phone Number</Text>
               {isEditingProfile ? (
                 <TextInput
-                  value={formData.phoneNumber}
-                  onChangeText={(text) => setFormData({...formData, phoneNumber: text})}
+                  value={formData.phoneNum}
+                  onChangeText={(text) => setFormData({...formData, phoneNum: text})}
                   placeholder="(555) 123-4567"
                   placeholderTextColor="#94a3b8"
                   style={styles.input}
@@ -341,48 +464,66 @@ export default function StudentProfile({ navigation }) {
                   editable={!isSaving}
                 />
               ) : (
-                <Text style={styles.fieldValue}>{formData.phoneNumber || 'Not provided'}</Text>
-              )}
-            </View>
-          </View>
-
-          {/* Medical Information Card */}
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Medical Information</Text>
-            
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Known Allergies</Text>
-              {isEditingProfile ? (
-                <TextInput
-                  value={formData.allergies}
-                  onChangeText={(text) => setFormData({...formData, allergies: text})}
-                  placeholder="e.g., Penicillin, Latex"
-                  placeholderTextColor="#94a3b8"
-                  style={[styles.input, styles.textArea]}
-                  multiline
-                  numberOfLines={2}
-                  editable={!isSaving}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{formData.allergies || 'None reported'}</Text>
+                <Text style={styles.fieldValue}>{formData.phoneNum || 'Not provided'}</Text>
               )}
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Medical Conditions</Text>
+              <Text style={styles.fieldLabel}>Date of Birth</Text>
               {isEditingProfile ? (
-                <TextInput
-                  value={formData.medicalConditions}
-                  onChangeText={(text) => setFormData({...formData, medicalConditions: text})}
-                  placeholder="e.g., Asthma, Diabetes"
-                  placeholderTextColor="#94a3b8"
-                  style={[styles.input, styles.textArea]}
-                  multiline
-                  numberOfLines={2}
-                  editable={!isSaving}
-                />
+                <>
+                  <TouchableOpacity
+                    onPress={openDatePicker}
+                    style={styles.datePickerButton}
+                    disabled={isSaving}
+                  >
+                    <Calendar color="#2563eb" size={20} />
+                    <Text style={styles.datePickerButtonText}>
+                      {formData.dateOfBirth || 'Select Date'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* iOS Modal Picker */}
+                  {Platform.OS === 'ios' && showDatePicker && (
+                    <Modal
+                      transparent={true}
+                      animationType="slide"
+                      visible={showDatePicker}
+                      onRequestClose={closeDatePicker}
+                    >
+                      <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                          <View style={styles.modalHeader}>
+                            <TouchableOpacity onPress={closeDatePicker}>
+                              <Text style={styles.modalDoneButton}>Done</Text>
+                            </TouchableOpacity>
+                          </View>
+                          <DateTimePicker
+                            value={selectedDate}
+                            mode="date"
+                            display="spinner"
+                            onChange={handleDateChange}
+                            maximumDate={new Date()}
+                            textColor="#000000"
+                          />
+                        </View>
+                      </View>
+                    </Modal>
+                  )}
+
+                  {/* Android Inline Picker */}
+                  {Platform.OS === 'android' && showDatePicker && (
+                    <DateTimePicker
+                      value={selectedDate}
+                      mode="date"
+                      display="default"
+                      onChange={handleDateChange}
+                      maximumDate={new Date()}
+                    />
+                  )}
+                </>
               ) : (
-                <Text style={styles.fieldValue}>{formData.medicalConditions || 'None reported'}</Text>
+                <Text style={styles.fieldValue}>{formData.dateOfBirth || 'Not provided'}</Text>
               )}
             </View>
 
@@ -406,28 +547,21 @@ export default function StudentProfile({ navigation }) {
           {/* Action Buttons */}
           {isEditingProfile && (
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.cancelButton]}
+              <ActionButton
+                title="Cancel"
+                icon={X}
+                variant="secondary"
                 onPress={cancelEdit}
                 disabled={isSaving}
-              >
-                <X color="#64748b" size={20} />
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.saveButton, isSaving && styles.buttonDisabled]}
+              />
+              <ActionButton
+                title="Save Changes"
+                icon={Check}
+                variant="primary"
                 onPress={saveProfile}
                 disabled={isSaving}
-              >
-                {isSaving ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Check color="#ffffff" size={20} />
-                    <Text style={styles.saveButtonText}>Save Changes</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                isLoading={isSaving}
+              />
             </View>
           )}
 
@@ -435,65 +569,35 @@ export default function StudentProfile({ navigation }) {
           <View style={styles.navigationSection}>
             <Text style={styles.navigationTitle}>Quick Actions</Text>
             
-            <TouchableOpacity 
-              style={styles.navButton}
+            <NavigationButton
+              title="Scenario Selection"
               onPress={() => handleButtonPress('ScenarioSelect')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Scenario Selection</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
+            <NavigationButton
+              title="Customize EMTelligence"
               onPress={() => handleButtonPress('CustomizeAI')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Customize EMTelligence</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
-              onPress={() => handleButtonPress('AIChat')} 
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Ask EMTelligence A Question</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            <NavigationButton
+              title="Ask EMTelligence A Question"
+              onPress={() => handleButtonPress('AIChat')}
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
+            <NavigationButton
+              title="Reference Library"
               onPress={() => handleButtonPress('ReferenceLib')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Reference Library</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
-              //onPress={() => handleButtonPress('Analytics')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>Analytics</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            <NavigationButton
+              title="Analytics"
+              onPress={() => handleButtonPress('Home')} //CHANGE
+            />
 
-            <TouchableOpacity 
-              style={styles.navButton}
+            <NavigationButton
+              title="History"
               onPress={() => handleButtonPress('History')}
-            >
-              <View style={styles.navButtonContent}>
-                <Text style={styles.navButtonText}>History</Text>
-                <Text style={styles.navButtonArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
+            />
           </View>
 
           <Text style={styles.footer}>Developed by CodeBlue Collective</Text>
@@ -540,7 +644,7 @@ const styles = StyleSheet.create({
   editIconButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#f1f5f9',
   },
   errorBanner: {
     flexDirection: 'row',
@@ -651,6 +755,56 @@ const styles = StyleSheet.create({
     color: '#0f172a',
     fontWeight: '600',
   },
+  scoreCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    alignItems: 'center',
+  },
+  scoreLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 8,
+  },
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  scoreIconLeft: {
+    transform: [{ scaleX: -1 }],
+  },
+  scoreIconRight: {
+  },
+  scoreValue: {
+    fontSize: 48,
+    fontWeight: '700',
+  },
+  viewMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  viewMoreText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2563eb',
+  },
+  viewMoreArrow: {
+    fontSize: 20,
+    color: '#2563eb',
+    fontWeight: '600',
+  },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
@@ -662,11 +816,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#0f172a',
-    marginBottom: 20,
   },
   fieldGroup: {
     marginBottom: 20,
@@ -685,6 +844,44 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     color: '#0f172a',
+  },
+  datePickerButton: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  datePickerButtonText: {
+    fontSize: 16,
+    color: '#0f172a',
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  modalDoneButton: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#2563eb',
   },
   textArea: {
     minHeight: 80,
@@ -736,7 +933,7 @@ const styles = StyleSheet.create({
   navigationTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#ffffffff',
+    color: '#ffffff',
     marginBottom: 16,
   },
   navButton: {

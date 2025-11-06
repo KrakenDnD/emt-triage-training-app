@@ -289,13 +289,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   continueButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#109b6dff',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
   continueText: {
-    color: '#1a365d',
+    color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',
   },
