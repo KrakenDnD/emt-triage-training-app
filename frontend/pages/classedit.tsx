@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Users, Plus, Edit3, Trash2, Save, X, UserPlus } from 'lucide-react-native';
+import { Users, Plus, Edit3, Trash2, Save, X, UserPlus, ArrowLeft } from 'lucide-react-native';
 
 export default function ClassEdit({ navigation }) {
   const [selectedClass, setSelectedClass] = useState('Class #1');
@@ -263,6 +263,12 @@ export default function ClassEdit({ navigation }) {
       <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
         <ScrollView>
           <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <ArrowLeft color="#ffffff" size={24} />
+            </TouchableOpacity>
             <Text style={styles.headerTitle}>Edit Class Roster</Text>
             <Text style={styles.headerSubtitle}>Manage students in your classes</Text>
           </View>
@@ -390,6 +396,15 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   header: {
     paddingTop: 20,
