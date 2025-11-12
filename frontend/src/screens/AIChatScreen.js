@@ -28,7 +28,7 @@ const AIChatScreen = ({ route, navigation }) => {
     setMessages([{
       id: 1,
       type: 'bot',
-      content: 'Hello! I\'m your EMT AI assistant. I can help with medical triage and provide guidance. What symptoms or concerns would you like to discuss?',
+      content: 'Hello! I\'m EMTelligence, your AI chat assisstant. I can help with medical triage and provide guidance. What symptoms or concerns would you like to discuss?',
       timestamp: new Date(),
       metadata: { scenario: 'system' }
     }]);
@@ -147,7 +147,7 @@ const AIChatScreen = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>EMT AI Assistant</Text>
+        <Text style={styles.headerTitle}>EMTelligence</Text>
       </View>
 
       <KeyboardAvoidingView 

@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Modal, Platform, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X, PartyPopper, NotebookPen, Calendar } from 'lucide-react-native';
+import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X, PartyPopper, NotebookPen, Calendar, Plus, Trash2, Clock, ChevronDown } from 'lucide-react-native';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
+interface EmergencyContact {
+  name: string;
+  phone: string;
+}
 
 interface ProfileDto {
   id?: string;
@@ -16,20 +21,26 @@ interface ProfileDto {
   email?: string;
   phoneNum?: string;
   dateOfBirth?: string;
-  emergencyContact?: string;
+  emergencyContacts?: EmergencyContact[];
   instructorId?: string;
   instructorName?: string;
   displayId?: string;
   role?: string;
   avgScore: number;
   profilePhoto?: string;
+  allergies?: string;
+  bloodtype?: string;
+  totalTime?: number;
 }
 
 interface UpdateProfileDto {
   phoneNum?: string;
   dateOfBirth?: string;
   emergencyContact?: string;
+  emergencyContacts?: EmergencyContact[];
   profilePhoto?: string;
+  allergies?: string;
+  bloodtype?: string;
 }
 
 class ProfileService {
@@ -65,6 +76,17 @@ class ProfileService {
       }
     }
 
+    let emergencyContacts: EmergencyContact[] = [];
+    if (data.emergencyContacts && Array.isArray(data.emergencyContacts)) {
+      emergencyContacts = data.emergencyContacts;
+    } else if (data.emergencyContact) {
+      //legacy format: parse "Name - (phone)" string
+      const parts = data.emergencyContact.split(' - ');
+      if (parts.length === 2) {
+        emergencyContacts = [{ name: parts[0].trim(), phone: parts[1].trim() }];
+      }
+    }
+
     return {
       id: userDoc.id,
       firstName: data.firstName || '',
@@ -74,6 +96,7 @@ class ProfileService {
       phoneNum: data.phoneNum || '',
       dateOfBirth: data.dateOfBirth || '',
       emergencyContact: data.emergencyContact || '',
+      emergencyContacts: emergencyContacts,
       instructorId: data.instructorId || '',
       instructorName: instructorName,
       displayId: data.displayId || '',
@@ -81,6 +104,9 @@ class ProfileService {
       avgScore: data.avgScore || 0,
       profilePhoto: data.profilePhoto || '',
       avatarUrl: data.profilePhoto || '',
+      allergies: data.allergies || '',
+      bloodtype: data.bloodtype || '',
+      totalTime: data.totalTime || 0,
     };
   }
 
@@ -110,6 +136,21 @@ const getScoreIcon = (score: number) => {
   if (score >= 85) return PartyPopper;
   if (score >= 70) return NotebookPen;
   return AlertCircle;
+};
+
+const formatTimeDisplay = (totalMinutes: number): string => {
+  if (!totalMinutes || totalMinutes === 0) return '0 min';
+  
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  
+  if (hours === 0) {
+    return `${minutes} min`;
+  } else if (minutes === 0) {
+    return `${hours} hr`;
+  } else {
+    return `${hours} hr ${minutes} min`;
+  }
 };
 
 const NavigationButton = ({ title, onPress }) => (
@@ -166,12 +207,16 @@ const IconButton = ({ icon: Icon, onPress, style }) => (
   
 const profileService = new ProfileService();
 
+const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
 export default function StudentProfile({ navigation }) {
   const [profile, setProfile] = useState<ProfileDto>({});
   const [formData, setFormData] = useState({
     phoneNum: '',
     dateOfBirth: '',
-    emergencyContact: '',
+    emergencyContacts: [] as EmergencyContact[],
+    allergies: '',
+    bloodtype: '',
   });
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   
@@ -182,6 +227,7 @@ export default function StudentProfile({ navigation }) {
 
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showBloodTypePicker, setShowBloodTypePicker] = useState<boolean>(false);
 
   const handleButtonPress = (route) => {
     try {
@@ -207,7 +253,11 @@ export default function StudentProfile({ navigation }) {
       setFormData({
         phoneNum: data.phoneNum || '',
         dateOfBirth: data.dateOfBirth || '',
-        emergencyContact: data.emergencyContact || '',
+        emergencyContacts: data.emergencyContacts && data.emergencyContacts.length > 0 
+          ? data.emergencyContacts 
+          : [{ name: '', phone: '' }],
+        allergies: data.allergies || '',
+        bloodtype: data.bloodtype || '',
       });
       
       if (data.dateOfBirth) {
@@ -267,15 +317,63 @@ export default function StudentProfile({ navigation }) {
     setShowDatePicker(false);
   };
 
+  const selectBloodType = (bloodType: string) => {
+    setFormData({
+      ...formData,
+      bloodtype: bloodType
+    });
+    setShowBloodTypePicker(false);
+  };
+
+  const openBloodTypePicker = () => {
+    setShowBloodTypePicker(true);
+  };
+
+  const closeBloodTypePicker = () => {
+    setShowBloodTypePicker(false);
+  };
+
+  const addEmergencyContact = () => {
+    if (formData.emergencyContacts.length < 3) {
+      setFormData({
+        ...formData,
+        emergencyContacts: [...formData.emergencyContacts, { name: '', phone: '' }]
+      });
+    }
+  };
+
+  const removeEmergencyContact = (index: number) => {
+    const newContacts = formData.emergencyContacts.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      emergencyContacts: newContacts.length > 0 ? newContacts : [{ name: '', phone: '' }]
+    });
+  };
+
+  const updateEmergencyContact = (index: number, field: 'name' | 'phone', value: string) => {
+    const newContacts = [...formData.emergencyContacts];
+    newContacts[index][field] = value;
+    setFormData({
+      ...formData,
+      emergencyContacts: newContacts
+    });
+  };
+
   const saveProfile = async () => {
     setIsSaving(true);
     setError(null);
 
     try {
+      const validContacts = formData.emergencyContacts.filter(
+        contact => contact.name.trim() !== '' || contact.phone.trim() !== ''
+      );
+
       const updateData: UpdateProfileDto = {
         phoneNum: formData.phoneNum.trim(),
         dateOfBirth: formData.dateOfBirth.trim(),
-        emergencyContact: formData.emergencyContact.trim(),
+        emergencyContacts: validContacts,
+        allergies: formData.allergies.trim(),
+        bloodtype: formData.bloodtype.trim(),
       };
 
       const updatedProfile = await profileService.updateMyProfile(updateData);
@@ -284,7 +382,11 @@ export default function StudentProfile({ navigation }) {
       setFormData({
         phoneNum: updatedProfile.phoneNum || '',
         dateOfBirth: updatedProfile.dateOfBirth || '',
-        emergencyContact: updatedProfile.emergencyContact || '',
+        emergencyContacts: updatedProfile.emergencyContacts && updatedProfile.emergencyContacts.length > 0
+          ? updatedProfile.emergencyContacts
+          : [{ name: '', phone: '' }],
+        allergies: updatedProfile.allergies || '',
+        bloodtype: updatedProfile.bloodtype || '',
       });
       setIsEditingProfile(false);
       
@@ -302,7 +404,11 @@ export default function StudentProfile({ navigation }) {
     setFormData({
       phoneNum: profile.phoneNum || '',
       dateOfBirth: profile.dateOfBirth || '',
-      emergencyContact: profile.emergencyContact || '',
+      emergencyContacts: profile.emergencyContacts && profile.emergencyContacts.length > 0
+        ? profile.emergencyContacts
+        : [{ name: '', phone: '' }],
+      allergies: profile.allergies || '',
+      bloodtype: profile.bloodtype || '',
     });
     
     //reset date picker to original date
@@ -315,6 +421,7 @@ export default function StudentProfile({ navigation }) {
     
     setIsEditingProfile(false);
     setShowDatePicker(false);
+    setShowBloodTypePicker(false);
   };
 
   const getAvatarSource = () => {
@@ -325,6 +432,15 @@ export default function StudentProfile({ navigation }) {
       return { uri: profile.profilePhoto };
     }
     return defaultAvatar;
+  };
+
+  const formatEmergencyContactsDisplay = () => {
+    if (!profile.emergencyContacts || profile.emergencyContacts.length === 0) {
+      return 'Not provided';
+    }
+    return profile.emergencyContacts
+      .map(contact => `${contact.name} - ${contact.phone}`)
+      .join('\n');
   };
 
   if (isLoading) {
@@ -439,6 +555,15 @@ export default function StudentProfile({ navigation }) {
             </TouchableOpacity>
           </View>
 
+          {/* Total Time Card */}
+          <View style={styles.hoursCard}>
+            <Text style={styles.hoursLabel}>Total Training Time</Text>
+            <View style={styles.hoursContent}>
+              <Clock color="#2563eb" size={28} />
+              <Text style={styles.hoursValue}>{formatTimeDisplay(profile.totalTime || 0)}</Text>
+            </View>
+          </View>
+
           {/* Editable Information Card */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -528,18 +653,139 @@ export default function StudentProfile({ navigation }) {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Emergency Contact</Text>
+              <View style={styles.emergencyContactHeader}>
+                <Text style={styles.fieldLabel}>Emergency Contacts</Text>
+                {isEditingProfile && formData.emergencyContacts.length < 3 && (
+                  <TouchableOpacity 
+                    onPress={addEmergencyContact}
+                    style={styles.addContactButton}
+                    disabled={isSaving}
+                  >
+                    <Plus color="#2563eb" size={20} />
+                    <Text style={styles.addContactText}>Add Contact</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              
+              {isEditingProfile ? (
+                <View style={styles.emergencyContactsContainer}>
+                  {formData.emergencyContacts.map((contact, index) => (
+                    <View key={index} style={styles.emergencyContactRow}>
+                      <View style={styles.emergencyContactInputs}>
+                        <TextInput
+                          value={contact.name}
+                          onChangeText={(text) => updateEmergencyContact(index, 'name', text)}
+                          placeholder="Name"
+                          placeholderTextColor="#94a3b8"
+                          style={[styles.input, styles.emergencyContactInput]}
+                          editable={!isSaving}
+                        />
+                        <TextInput
+                          value={contact.phone}
+                          onChangeText={(text) => updateEmergencyContact(index, 'phone', text)}
+                          placeholder="(555) 123-4567"
+                          placeholderTextColor="#94a3b8"
+                          style={[styles.input, styles.emergencyContactInput]}
+                          keyboardType="phone-pad"
+                          editable={!isSaving}
+                        />
+                      </View>
+                      {formData.emergencyContacts.length > 1 && (
+                        <TouchableOpacity
+                          onPress={() => removeEmergencyContact(index)}
+                          style={styles.removeContactButton}
+                          disabled={isSaving}
+                        >
+                          <Trash2 color="#ef4444" size={20} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.fieldValue}>{formatEmergencyContactsDisplay()}</Text>
+              )}
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Blood Type</Text>
+              {isEditingProfile ? (
+                <>
+                  <TouchableOpacity
+                    onPress={openBloodTypePicker}
+                    style={styles.bloodTypeButton}
+                    disabled={isSaving}
+                  >
+                    <Text style={[
+                      styles.bloodTypeButtonText,
+                      !formData.bloodtype && styles.bloodTypePlaceholder
+                    ]}>
+                      {formData.bloodtype || 'Select Blood Type'}
+                    </Text>
+                    <ChevronDown color="#2563eb" size={20} />
+                  </TouchableOpacity>
+
+                  {/* Blood Type Picker Modal */}
+                  <Modal
+                    transparent={true}
+                    animationType="slide"
+                    visible={showBloodTypePicker}
+                    onRequestClose={closeBloodTypePicker}
+                  >
+                    <View style={styles.modalOverlay}>
+                      <View style={styles.bloodTypeModalContent}>
+                        <View style={styles.modalHeader}>
+                          <Text style={styles.bloodTypeModalTitle}>Select Blood Type</Text>
+                          <TouchableOpacity onPress={closeBloodTypePicker}>
+                            <Text style={styles.modalDoneButton}>Done</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.bloodTypeList}>
+                          {BLOOD_TYPES.map((bloodType) => (
+                            <TouchableOpacity
+                              key={bloodType}
+                              style={[
+                                styles.bloodTypeOption,
+                                formData.bloodtype === bloodType && styles.bloodTypeOptionSelected
+                              ]}
+                              onPress={() => selectBloodType(bloodType)}
+                            >
+                              <Text style={[
+                                styles.bloodTypeOptionText,
+                                formData.bloodtype === bloodType && styles.bloodTypeOptionTextSelected
+                              ]}>
+                                {bloodType}
+                              </Text>
+                              {formData.bloodtype === bloodType && (
+                                <Check color="#2563eb" size={20} />
+                              )}
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    </View>
+                  </Modal>
+                </>
+              ) : (
+                <Text style={styles.fieldValue}>{formData.bloodtype || 'Not provided'}</Text>
+              )}
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Allergies</Text>
               {isEditingProfile ? (
                 <TextInput
-                  value={formData.emergencyContact}
-                  onChangeText={(text) => setFormData({...formData, emergencyContact: text})}
-                  placeholder="Name - (555) 123-4567"
+                  value={formData.allergies}
+                  onChangeText={(text) => setFormData({...formData, allergies: text})}
+                  placeholder="None, or list any allergies..."
                   placeholderTextColor="#94a3b8"
-                  style={styles.input}
+                  style={[styles.input, styles.textArea]}
+                  multiline
+                  numberOfLines={3}
                   editable={!isSaving}
                 />
               ) : (
-                <Text style={styles.fieldValue}>{formData.emergencyContact || 'Not provided'}</Text>
+                <Text style={styles.fieldValue}>{formData.allergies || 'Not provided'}</Text>
               )}
             </View>
           </View>
@@ -581,7 +827,7 @@ export default function StudentProfile({ navigation }) {
 
             <NavigationButton
               title="Ask EMTelligence A Question"
-              onPress={() => handleButtonPress('AIChat')}
+              onPress={() => handleButtonPress('AIChatScreen')}
             />
 
             <NavigationButton
@@ -805,6 +1051,35 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontWeight: '600',
   },
+  hoursCard: {
+  backgroundColor: '#ffffff',
+  borderRadius: 16,
+  padding: 20,
+  marginBottom: 16,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 8,
+  elevation: 3,
+  alignItems: 'center', 
+  },
+  hoursContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12, 
+  },
+  hoursLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  hoursValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
@@ -882,6 +1157,106 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     color: '#2563eb',
+  },
+  bloodTypeButton: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bloodTypeButtonText: {
+    fontSize: 16,
+    color: '#0f172a',
+    flex: 1,
+  },
+  bloodTypePlaceholder: {
+    color: '#94a3b8',
+  },
+  bloodTypeModalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '50%',
+  },
+  bloodTypeModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+    flex: 1,
+    textAlign: 'center',
+  },
+  bloodTypeList: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  bloodTypeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  bloodTypeOptionSelected: {
+    backgroundColor: '#eff6ff',
+  },
+  bloodTypeOptionText: {
+    fontSize: 18,
+    color: '#0f172a',
+    fontWeight: '500',
+  },
+  bloodTypeOptionTextSelected: {
+    color: '#2563eb',
+    fontWeight: '700',
+  },
+  emergencyContactHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  addContactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#eff6ff',
+    borderRadius: 8,
+  },
+  addContactText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2563eb',
+  },
+  emergencyContactsContainer: {
+    gap: 12,
+  },
+  emergencyContactRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  emergencyContactInputs: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  emergencyContactInput: {
+    flex: 1,
+  },
+  removeContactButton: {
+    padding: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#fecaca',
   },
   textArea: {
     minHeight: 80,

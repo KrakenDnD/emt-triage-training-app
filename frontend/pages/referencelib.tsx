@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BookOpen, Heart, Users, Clipboard, Pill, BookMarked, ChevronRight } from 'lucide-react-native';
+import { BookOpen, Heart, Users, Clipboard, Pill, BookMarked, ChevronRight, ArrowLeft } from 'lucide-react-native';
 
 const ReferenceCard = ({ 
   title, 
@@ -51,6 +51,12 @@ const ReferenceLibrary = ({ navigation }) => {
       <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
         <ScrollView>
           <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <ArrowLeft color="#ffffff" size={24} />
+            </TouchableOpacity>
             <Text style={styles.headerTitle}>Reference Library</Text>
             <Text style={styles.headerSubtitle}>Essential resources at your fingertips</Text>
           </View>
@@ -124,6 +130,15 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   header: {
     paddingTop: 20,

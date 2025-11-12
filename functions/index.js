@@ -588,6 +588,8 @@ app.get('/seed-user-profiles', async (req, res) => {
           completedScenarios: [],
           avgScore: 0,
           allergies: '',
+          bloodtype: '',
+          totalTime: 0,
           avatar: '',
           phoneNum: '',
           dateOfBirth: '',
