@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GraduationCap, Users, BookOpen, Send, Edit2, X, Check } from 'lucide-react-native';
+import { GraduationCap, Users, BookOpen, Send, Edit2, X, Check, Camera } from 'lucide-react-native';
 import { auth, db } from '../firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
 
 const NavigationButton = ({ title, onPress }) => (
   <TouchableOpacity style={styles.navButton} onPress={onPress}>
@@ -45,15 +46,20 @@ export default function InstructorProfile({ navigation }) {
   const [userProfile, setUserProfile] = useState({
     firstName: '',
     lastName: '',
-    title: ''
+    title: '',
+    avatar: ''
   });
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
     firstName: '',
     lastName: '',
-    title: ''
+    title: '',
+    avatar: ''
   });
+  const [localAvatarUri, setLocalAvatarUri] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const defaultAvatar = require('../assets/metalmario.png');
 
   const classes = ['Class #1', 'Class #2', 'Class #3', 'Class #4'];
 
@@ -149,7 +155,8 @@ export default function InstructorProfile({ navigation }) {
           setUserProfile({
             firstName: data.firstName || '',
             lastName: data.lastName || '',
-            title: data.title || 'EMT Instructor'
+            title: data.title || 'EMT Instructor',
+            avatar: data.avatar || ''
           });
         }
       }
@@ -165,9 +172,42 @@ export default function InstructorProfile({ navigation }) {
     setEditedProfile({
       firstName: userProfile.firstName,
       lastName: userProfile.lastName,
-      title: userProfile.title
+      title: userProfile.title,
+      avatar: userProfile.avatar
     });
+    setLocalAvatarUri(null);
     setEditModalVisible(true);
+  };
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to change your profile photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const selectedImageUri = result.assets[0].uri;
+      setLocalAvatarUri(selectedImageUri);
+    }
+  };
+
+  const getAvatarSource = () => {
+    if (editModalVisible && localAvatarUri) {
+      return { uri: localAvatarUri };
+    }
+    if (userProfile.avatar) {
+      return { uri: userProfile.avatar };
+    }
+    return defaultAvatar;
   };
 
   const handleSaveProfile = async () => {
@@ -175,20 +215,35 @@ export default function InstructorProfile({ navigation }) {
       const user = auth.currentUser;
       
       if (user) {
-        await updateDoc(doc(db, 'users', user.uid), {
+        const updateData = {
           firstName: editedProfile.firstName,
           lastName: editedProfile.lastName,
           title: editedProfile.title
-        });
+        };
 
-        setUserProfile(editedProfile);
+        if (localAvatarUri) {
+          updateData.avatar = localAvatarUri;
+        }
+
+        await updateDoc(doc(db, 'users', user.uid), updateData);
+
+        setUserProfile({
+          ...editedProfile,
+          avatar: localAvatarUri || userProfile.avatar
+        });
         setEditModalVisible(false);
+        setLocalAvatarUri(null);
         Alert.alert('Success', 'Profile updated successfully!');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
       Alert.alert('Error', 'Failed to update profile');
     }
+  };
+
+  const handleCancelEdit = () => {
+    setLocalAvatarUri(null);
+    setEditModalVisible(false);
   };
 
   const handleSaveHomework = () => {
@@ -223,7 +278,7 @@ export default function InstructorProfile({ navigation }) {
             <View style={styles.profileCard}>
               <View style={styles.avatarSection}>
                 <View style={styles.avatarContainer}>
-                  <Image source={require('../assets/metalmario.png')} style={styles.avatar} />
+                  <Image source={getAvatarSource()} style={styles.avatar} />
                 </View>
                 <View style={styles.nameSection}>
                   <Text style={styles.titleText}>{userProfile.title}</Text>
@@ -375,18 +430,32 @@ export default function InstructorProfile({ navigation }) {
         animationType="slide"
         transparent={true}
         visible={editModalVisible}
-        onRequestClose={() => setEditModalVisible(false)}
+        onRequestClose={handleCancelEdit}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Profile</Text>
-              <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+              <TouchableOpacity onPress={handleCancelEdit}>
                 <X color="#64748b" size={24} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.modalBody}>
+              {/* Avatar Section */}
+              <View style={styles.avatarEditSection}>
+                <View style={styles.avatarEditContainer}>
+                  <Image source={getAvatarSource()} style={styles.avatarEdit} />
+                  <TouchableOpacity 
+                    style={styles.avatarEditButton}
+                    onPress={pickImage}
+                  >
+                    <Camera color="#ffffff" size={20} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.avatarEditHint}>Tap camera icon to change photo</Text>
+              </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Title</Text>
                 <TextInput
@@ -424,7 +493,7 @@ export default function InstructorProfile({ navigation }) {
             <View style={styles.modalFooter}>
               <TouchableOpacity 
                 style={styles.modalCancelButton}
-                onPress={() => setEditModalVisible(false)}
+                onPress={handleCancelEdit}
               >
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
@@ -457,7 +526,7 @@ const styles = StyleSheet.create({
   navigationTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#ffffffff',
+    color: '#ffffff',
     marginBottom: 16,
   },
   navButton: {
@@ -801,56 +870,86 @@ const styles = StyleSheet.create({
   modalBody: {
     padding: 20,
   },
-  inputGroup: {
-    marginBottom: 16,
+  avatarEditSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
+  avatarEditContainer: {
+    position: 'relative',
     marginBottom: 8,
   },
-  modalInput: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    color: '#0f172a',
+  avatarEdit: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#2563eb',
   },
-  modalFooter: {
-    flexDirection: 'row',
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    gap: 12,
-  },
-  modalCancelButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 10,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-  },
-  modalCancelText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  modalSaveButton: {
-    flex: 1,
-    flexDirection: 'row',
-    padding: 14,
-    borderRadius: 10,
+  avatarEditButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
     backgroundColor: '#2563eb',
-    alignItems: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
-    gap: 8,
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#ffffff',
   },
-  modalSaveText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+  avatarEditHint: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
   },
+  inputGroup: { 
+    marginBottom: 16 
+  },
+  inputLabel: { 
+    fontSize: 14, 
+    fontWeight: '600', 
+    color: '#475569', 
+    marginBottom: 8 
+  },
+  modalInput: { 
+    backgroundColor: '#f8fafc', 
+    borderWidth: 1, 
+    borderColor: '#e2e8f0', 
+    borderRadius: 10, padding: 12, 
+    fontSize: 16, 
+    color: '#0f172a' 
+  },
+  modalFooter: { 
+    flexDirection: 'row', 
+    padding: 20, 
+    borderTopWidth: 1, 
+    borderTopColor: '#e2e8f0', 
+    gap: 12 },
+  modalCancelButton: { 
+    flex: 1, 
+    padding: 14, 
+    borderRadius: 10, 
+    backgroundColor: '#f1f5f9', 
+    alignItems: 'center' },
+  modalCancelText: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#475569' },
+  modalSaveButton: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    padding: 14, 
+    borderRadius: 10, 
+    backgroundColor: '#2563eb', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: 8 },
+  modalSaveText: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#ffffff' },
 });
