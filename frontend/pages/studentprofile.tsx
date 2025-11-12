@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Modal, Platform, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X, PartyPopper, NotebookPen, Calendar, Plus, Trash2, Clock, ChevronDown } from 'lucide-react-native';
+import { User, Phone, AlertCircle, GraduationCap, Hash, Mail, Edit3, Check, X, PartyPopper, NotebookPen, Calendar, Plus, Trash2, Clock, ChevronDown, Camera } from 'lucide-react-native';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 
 interface EmergencyContact {
   name: string;
@@ -17,7 +18,6 @@ interface ProfileDto {
   firstName?: string;
   lastName?: string;
   fullName?: string;
-  avatarUrl?: string;
   email?: string;
   phoneNum?: string;
   dateOfBirth?: string;
@@ -28,6 +28,7 @@ interface ProfileDto {
   role?: string;
   avgScore: number;
   profilePhoto?: string;
+  avatar?: string;
   allergies?: string;
   bloodtype?: string;
   totalTime?: number;
@@ -38,7 +39,7 @@ interface UpdateProfileDto {
   dateOfBirth?: string;
   emergencyContact?: string;
   emergencyContacts?: EmergencyContact[];
-  profilePhoto?: string;
+  avatar?: string;
   allergies?: string;
   bloodtype?: string;
 }
@@ -95,7 +96,6 @@ class ProfileService {
       email: data.email,
       phoneNum: data.phoneNum || '',
       dateOfBirth: data.dateOfBirth || '',
-      emergencyContact: data.emergencyContact || '',
       emergencyContacts: emergencyContacts,
       instructorId: data.instructorId || '',
       instructorName: instructorName,
@@ -103,7 +103,7 @@ class ProfileService {
       role: data.role || '',
       avgScore: data.avgScore || 0,
       profilePhoto: data.profilePhoto || '',
-      avatarUrl: data.profilePhoto || '',
+      avatar: data.avatar || '',
       allergies: data.allergies || '',
       bloodtype: data.bloodtype || '',
       totalTime: data.totalTime || 0,
@@ -359,6 +359,27 @@ export default function StudentProfile({ navigation }) {
     });
   };
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to change your profile photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const selectedImageUri = result.assets[0].uri;
+      setLocalAvatarUri(selectedImageUri);
+    }
+  };
+
   const saveProfile = async () => {
     setIsSaving(true);
     setError(null);
@@ -375,6 +396,10 @@ export default function StudentProfile({ navigation }) {
         allergies: formData.allergies.trim(),
         bloodtype: formData.bloodtype.trim(),
       };
+
+      if (localAvatarUri) {
+        updateData.avatar = localAvatarUri;
+      }
 
       const updatedProfile = await profileService.updateMyProfile(updateData);
       
@@ -411,6 +436,8 @@ export default function StudentProfile({ navigation }) {
       bloodtype: profile.bloodtype || '',
     });
     
+    setLocalAvatarUri(null);
+    
     //reset date picker to original date
     if (profile.dateOfBirth) {
       const parsedDate = parseDateString(profile.dateOfBirth);
@@ -427,6 +454,9 @@ export default function StudentProfile({ navigation }) {
   const getAvatarSource = () => {
     if (localAvatarUri) {
       return { uri: localAvatarUri };
+    }
+    if (profile.avatar) {
+      return { uri: profile.avatar };
     }
     if (profile.profilePhoto) {
       return { uri: profile.profilePhoto };
@@ -481,6 +511,15 @@ export default function StudentProfile({ navigation }) {
             <View style={styles.avatarSection}>
               <View style={styles.avatarContainer}>
                 <Image source={getAvatarSource()} style={styles.avatar} />
+                {isEditingProfile && (
+                  <TouchableOpacity 
+                    style={styles.avatarEditButton}
+                    onPress={pickImage}
+                    disabled={isSaving}
+                  >
+                    <Camera color="#ffffff" size={20} />
+                  </TouchableOpacity>
+                )}
                 {isSaving && (
                   <View style={styles.avatarOverlay}>
                     <ActivityIndicator size="small" color="#ffffff" />
@@ -940,6 +979,19 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 3,
     borderColor: '#2563eb',
+  },
+  avatarEditButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#2563eb',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
   avatarOverlay: {
     position: 'absolute',
