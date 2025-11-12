@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CheckCircle, Clock, Users, AlertTriangle, Calendar, Award, TrendingUp } from 'lucide-react-native';
+import { CheckCircle, Clock, Users, AlertTriangle, Calendar, Award, TrendingUp, ArrowLeft } from 'lucide-react-native';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
@@ -83,14 +83,15 @@ const getDifficultyColor = (difficulty) => {
 const getDifficultyIcon = (difficulty) => {
   switch(difficulty.toLowerCase()) {
     case 'easy':
-      return <Clock color="#10b981" size={16} />;
+      return <Clock color="#ffffff" size={16} />;
     case 'medium':
-      return <Users color="#f59e0b" size={16} />;
+      return <Users color="#ffffff" size={16} />;
     case 'hard':
+      return <AlertTriangle color="#ffffff" size={16} />;
     case 'extreme':
-      return <AlertTriangle color="#ef4444" size={16} />;
+      return <AlertTriangle color="#ffffff" size={16} />;
     default:
-      return <Clock color="#64748b" size={16} />;
+      return <Clock color="#ffffff" size={16} />;
   }
 };
 
@@ -212,6 +213,12 @@ const ScenarioHistory = ({ navigation, route }) => {
       <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
         <ScrollView>
           <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <ArrowLeft color="#ffffff" size={24} />
+            </TouchableOpacity>
             <Text style={styles.headerTitle}>Training History</Text>
             <Text style={styles.headerSubtitle}>Review your completed scenarios</Text>
           </View>
@@ -284,6 +291,15 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 24,
     paddingHorizontal: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   headerTitle: {
     fontSize: 28,

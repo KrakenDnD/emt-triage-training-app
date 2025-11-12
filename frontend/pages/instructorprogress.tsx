@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BarChart3, Users, Trophy, TrendingUp, Award } from 'lucide-react-native';
+import { BarChart3, Users, Trophy, TrendingUp, Award, ArrowLeft } from 'lucide-react-native';
 
 export default function InstructorProgress({ navigation }) {
   const [selectedClass, setSelectedClass] = useState('Class #1');
@@ -367,6 +367,12 @@ export default function InstructorProgress({ navigation }) {
       <LinearGradient colors={['#1a365d', '#2c5282', '#3182ce']} style={styles.gradient}>
         <ScrollView>
           <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <ArrowLeft color="#ffffff" size={24} />
+            </TouchableOpacity>
             <Text style={styles.headerTitle}>Student Progress</Text>
             <Text style={styles.headerSubtitle}>Track test scores and performance</Text>
           </View>
@@ -539,11 +545,20 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   header: {
     paddingTop: 20,
     paddingHorizontal: 24,
     paddingBottom: 24,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   headerTitle: {
     fontSize: 28,
