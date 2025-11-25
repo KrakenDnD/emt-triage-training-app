@@ -71,7 +71,7 @@ function HomeScreen({ navigation }) {
 
             <TouchableOpacity
               style={[styles.button, { backgroundColor: '#28a745', marginTop: 15 }]}
-              onPress={() => navigation.navigate('AIChatScreen')}
+              onPress={() => navigation.navigate('AIChat')}
             >
               <Text style={styles.buttonText}>🤖 Try AI Assistant</Text>
             </TouchableOpacity>
